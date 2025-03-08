@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -70,25 +71,56 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' }
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' }
+				},
+				'fade-in': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fade-out': {
+					'0%': { opacity: '1', transform: 'translateY(0)' },
+					'100%': { opacity: '0', transform: 'translateY(10px)' }
+				},
+				'slide-in': {
+					'0%': { transform: 'translateX(100%)' },
+					'100%': { transform: 'translateX(0)' }
+				},
+				'slide-out': {
+					'0%': { transform: 'translateX(0)' },
+					'100%': { transform: 'translateX(-100%)' }
+				},
+				'pulse-soft': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' }
+				},
+				'scale': {
+					'0%': { transform: 'scale(0.95)' },
+					'100%': { transform: 'scale(1)' }
+				},
+				'blur-in': {
+					'0%': { filter: 'blur(5px)', opacity: '0' },
+					'100%': { filter: 'blur(0)', opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.5s ease-out forwards',
+				'fade-out': 'fade-out 0.5s ease-out forwards',
+				'slide-in': 'slide-in 0.5s ease-out forwards',
+				'slide-out': 'slide-out 0.5s ease-out forwards',
+				'pulse-soft': 'pulse-soft 3s infinite ease-in-out',
+				'scale': 'scale 0.3s ease-out forwards',
+				'blur-in': 'blur-in 0.5s ease-out forwards'
+			},
+			transitionTimingFunction: {
+				'bounce-ease': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+				'soft-spring': 'cubic-bezier(0.5, 1.25, 0.75, 1.25)'
 			}
 		}
 	},
