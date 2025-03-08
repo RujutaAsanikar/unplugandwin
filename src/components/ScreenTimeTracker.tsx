@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Upload, Plus, Trash2 } from 'lucide-react';
+import { Clock, Upload, Hand, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
@@ -98,104 +98,117 @@ const ScreenTimeTracker = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4">
-      <ScreenTimeGraph data={screenTimeEntries} />
-      
-      <motion.div 
-        className="mt-8 flex flex-col gap-6"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+    <div className="w-full max-w-4xl mx-auto px-4 space-y-6">
+      <div className="flex flex-col md:flex-row gap-4 items-start mt-8">
         <motion.div 
-          className="flex justify-between items-center" 
-          variants={itemVariants}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex-1 w-full"
         >
-          <h2 className="text-2xl font-medium">Screen Time Entries</h2>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold">Welcome Back! </h1>
+            <Hand className="h-8 w-8 text-yellow-400" />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Screenshots Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="glassmorphism p-6"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Screen Time Screenshots</h2>
           <Button 
             onClick={() => setUploadModalOpen(true)} 
-            className="button-hover bg-primary hover:bg-primary/90"
+            variant="outline"
+            className="button-hover"
           >
-            <Plus className="mr-2 h-4 w-4" /> Add Entry
+            <Upload className="mr-2 h-4 w-4" /> Upload Screenshot
           </Button>
-        </motion.div>
+        </div>
 
         {sortedEntries.length === 0 ? (
-          <motion.div 
-            className="glassmorphism rounded-xl p-6 flex flex-col items-center justify-center text-center"
-            variants={itemVariants}
-          >
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Clock className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">No entries yet</h3>
-            <p className="text-muted-foreground mb-4 max-w-md">
-              Add your first screen time entry by uploading a screenshot and entering the minutes spent.
-            </p>
-            <Button 
-              onClick={() => setUploadModalOpen(true)} 
-              variant="outline"
-              className="button-hover"
-            >
-              <Upload className="mr-2 h-4 w-4" /> Upload Screenshot
-            </Button>
-          </motion.div>
+          <div className="text-center py-10 text-muted-foreground">
+            No screenshots uploaded yet. Add your first screen time entry.
+          </div>
         ) : (
-          <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" variants={containerVariants}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {sortedEntries.map((entry) => (
               <motion.div
                 key={entry.id}
-                className="glassmorphism rounded-xl overflow-hidden border border-border shadow-sm card-hover"
-                variants={itemVariants}
+                className="overflow-hidden rounded-lg border border-gray-100 shadow-sm"
                 layout
               >
-                <div className="relative">
+                <div className="relative aspect-video bg-gray-50">
                   {entry.screenshotUrl ? (
-                    <div className="aspect-video bg-gray-100 relative overflow-hidden">
-                      <img
-                        src={entry.screenshotUrl}
-                        alt={`Screenshot from ${entry.date}`}
-                        className="w-full h-full object-cover transition-all duration-500 image-loading image-loaded"
-                        onLoad={(e) => e.currentTarget.classList.add('image-loaded')}
-                      />
-                    </div>
+                    <img
+                      src={entry.screenshotUrl}
+                      alt={`Screenshot from ${entry.date}`}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                      <Calendar className="w-8 h-8 text-gray-400" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Clock className="w-8 h-8 text-gray-300" />
                     </div>
                   )}
                 </div>
                 
-                <div className="p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <time className="text-sm text-muted-foreground">
-                      {new Date(entry.date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </time>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDeleteEntry(entry.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{entry.minutes} minutes</span>
+                <div className="p-3">
+                  <time className="text-xs text-gray-500 block">
+                    {new Date(entry.date).toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </time>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Clock className="h-3 w-3 text-primary" />
+                    <span className="text-sm font-medium">{entry.minutes} minutes</span>
                   </div>
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         )}
       </motion.div>
 
+      {/* Track Time Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="glassmorphism p-6"
+      >
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+            <Smartphone className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">Track Your Screen Time</h2>
+            <p className="text-gray-500">Enter your daily screen time to track your progress</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="font-medium">Today's Screen Time</h3>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button 
+              onClick={() => setTimeInputModalOpen(true)}
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+            >
+              <Clock className="mr-2 h-5 w-5" /> Log Time
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+
+      <ScreenTimeGraph data={screenTimeEntries} />
+      
       <UploadModal 
         isOpen={uploadModalOpen} 
         onClose={() => setUploadModalOpen(false)} 

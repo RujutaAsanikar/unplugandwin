@@ -9,13 +9,13 @@ import Rewards from '@/components/Rewards';
 const Index = () => {
   return (
     <motion.div
-      className="min-h-screen py-6"
+      className="min-h-screen bg-white"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
       <Header />
-      <main className="container max-w-6xl mx-auto pb-20">
+      <main className="container max-w-6xl mx-auto py-8 pb-20">
         <ScreenTimeTracker />
         <Challenges />
         <Rewards />
