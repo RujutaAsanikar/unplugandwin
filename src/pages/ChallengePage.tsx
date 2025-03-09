@@ -18,9 +18,14 @@ const ChallengePage = () => {
     const savedChallengeStarted = localStorage.getItem('challengeStarted') === 'true';
     const savedChallengeProgress = parseInt(localStorage.getItem('challengeProgress') || '0');
     
-    if (savedChallengeStarted) {
-      setChallengeStarted(true);
-      setChallengeProgress(savedChallengeProgress);
+    setChallengeStarted(savedChallengeStarted);
+    setChallengeProgress(savedChallengeProgress);
+    
+    // Simulate progress for demo purposes - remove in production
+    if (savedChallengeStarted && savedChallengeProgress === 0) {
+      const randomProgress = Math.floor(Math.random() * 30) + 10; // Between 10-40%
+      setChallengeProgress(randomProgress);
+      localStorage.setItem('challengeProgress', randomProgress.toString());
     }
   }, []);
 

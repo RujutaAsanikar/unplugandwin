@@ -1,13 +1,29 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Trophy } from 'lucide-react';
 import Header from '@/components/Header';
 import ScreenTimeTracker from '@/components/ScreenTimeTracker';
 import { getUserPoints, saveUserPoints } from '@/lib/pointsManager';
 import PointsDisplay from '@/components/PointsDisplay';
+import { Button } from '@/components/ui/button';
+import TermsModal from '@/components/TermsModal';
+import { useToast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [points, setPoints] = useState(getUserPoints());
+  const [showTerms, setShowTerms] = useState(false);
+  const [challengeStarted, setChallengeStarted] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Load challenge state and points on component mount
+  useEffect(() => {
+    const savedChallengeStarted = localStorage.getItem('challengeStarted') === 'true';
+    setChallengeStarted(savedChallengeStarted);
+    setPoints(getUserPoints());
+  }, []);
 
   // Save points to localStorage whenever they change
   useEffect(() => {
@@ -19,6 +35,24 @@ const Index = () => {
       ...prev,
       current: prev.current + earned
     }));
+  };
+
+  const handleStartChallenge = () => {
+    setShowTerms(true);
+  };
+
+  const handleAcceptTerms = () => {
+    setChallengeStarted(true);
+    setShowTerms(false);
+    
+    // Save challenge state to localStorage
+    localStorage.setItem('challengeStarted', 'true');
+    localStorage.setItem('challengeProgress', '0');
+    
+    toast({
+      title: "Challenge started!",
+      description: "You've successfully started the 30-day social media reduction challenge",
+    });
   };
 
   return (
@@ -33,7 +67,50 @@ const Index = () => {
         <div className="px-4 mb-6 flex justify-end">
           <PointsDisplay points={points} />
         </div>
+
+        {!challengeStarted && (
+          <motion.div 
+            className="glassmorphism rounded-xl p-6 border border-primary/30 shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] mb-8 mx-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex gap-6 items-start">
+              <div className="w-14 h-14 flex-shrink-0 bg-primary/10 rounded-full flex items-center justify-center">
+                <Trophy className="w-7 h-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold mb-2">Digital Detox Month</h2>
+                <p className="text-gray-600 mb-4">
+                  Reduce your social media usage by 50% over the next 30 days. Track your progress, earn points, and develop healthier digital habits.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    className="bg-primary"
+                    onClick={handleStartChallenge}
+                  >
+                    Start Challenge
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => navigate('/challenges')}
+                  >
+                    View Details
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <ScreenTimeTracker onPointsEarned={handlePointsEarned} />
+
+        <TermsModal 
+          isOpen={showTerms} 
+          onClose={() => setShowTerms(false)} 
+          onAccept={handleAcceptTerms}
+          challengeName="Digital Detox Month"
+        />
       </main>
     </motion.div>
   );
