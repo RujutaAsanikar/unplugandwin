@@ -9,6 +9,7 @@ import UploadModal from './UploadModal';
 import TimeInputModal from './TimeInputModal';
 import { useToast } from '@/components/ui/use-toast';
 import { updateChallengeProgress } from '@/lib/challengeManager';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ScreenTimeTrackerProps {
   onPointsEarned?: (points: number) => void;
@@ -22,6 +23,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const savedEntries = localStorage.getItem('screenTimeEntries');
@@ -120,9 +122,9 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="flex-1 w-full"
+        className="flex-1 w-full text-center sm:text-left"
       >
-        <h1 className="text-2xl font-bold mb-4">Social Media Usage Tracker</h1>
+        <h1 className="text-2xl font-bold mb-4 whitespace-nowrap">Social Media Usage Tracker</h1>
       </motion.div>
 
       <ScreenTimeGraph data={screenTimeEntries} />
@@ -133,12 +135,12 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         transition={{ duration: 0.5, delay: 0.3 }}
         className="glassmorphism p-6"
       >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Social Media Screen Time</h2>
+        <div className={`${isMobile ? 'flex flex-col' : 'flex justify-between'} items-center mb-4`}>
+          <h2 className="text-xl font-semibold mb-2 sm:mb-0 whitespace-nowrap">Social Media Screen Time</h2>
           <Button 
             onClick={() => setUploadModalOpen(true)} 
             variant="outline"
-            className="button-hover"
+            className="button-hover w-full sm:w-auto"
           >
             <Upload className="mr-2 h-4 w-4" /> Upload Screenshot
           </Button>
