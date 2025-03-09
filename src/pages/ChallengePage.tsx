@@ -1,17 +1,33 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Trophy, CheckCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
+import PointsDisplay from '@/components/PointsDisplay';
 
 const ChallengePage = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [challengeStarted, setChallengeStarted] = useState(false);
   const [challengeProgress, setChallengeProgress] = useState(0);
+  const [points, setPoints] = useState({
+    current: 500,
+    target: 30000
+  });
   const { toast } = useToast();
+
+  // Load challenge state from localStorage on component mount
+  useEffect(() => {
+    const savedChallengeStarted = localStorage.getItem('challengeStarted') === 'true';
+    const savedChallengeProgress = parseInt(localStorage.getItem('challengeProgress') || '0');
+    
+    if (savedChallengeStarted) {
+      setChallengeStarted(true);
+      setChallengeProgress(savedChallengeProgress);
+    }
+  }, []);
 
   const handleStartChallenge = () => {
     setShowTerms(true);
@@ -20,6 +36,11 @@ const ChallengePage = () => {
   const handleAcceptTerms = () => {
     setChallengeStarted(true);
     setShowTerms(false);
+    
+    // Save challenge state to localStorage
+    localStorage.setItem('challengeStarted', 'true');
+    localStorage.setItem('challengeProgress', '0');
+    
     toast({
       title: "Challenge started!",
       description: "You've successfully started the 30-day social media reduction challenge",
@@ -61,6 +82,10 @@ const ChallengePage = () => {
     >
       <Header activeTab="Challenges" />
       <main className="container max-w-4xl mx-auto py-8 pb-20 px-4">
+        <div className="flex justify-end mb-4">
+          <PointsDisplay points={points} />
+        </div>
+        
         <motion.div
           className="flex flex-col gap-6"
           variants={containerVariants}
