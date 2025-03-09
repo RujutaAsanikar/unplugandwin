@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -58,7 +57,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       };
       setScreenTimeEntries([...screenTimeEntries, newEntry]);
       
-      // Update challenge progress when a new screenshot is added
       const updatedProgress = updateChallengeProgress();
       
       if (onPointsEarned) {
@@ -190,23 +188,13 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           </div>
         )}
       </motion.div>
-
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
         className="glassmorphism p-6"
       >
-        <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <Smartphone className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">Track Your Social Media Usage</h2>
-            <p className="text-gray-500">Enter your daily social media screen time to track your progress</p>
-          </div>
-        </div>
-
         <div className="space-y-4">
           <h3 className="font-medium">Today's Social Media Time</h3>
           <div className="flex flex-col sm:flex-row gap-4">

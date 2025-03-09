@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Hand } from 'lucide-react';
@@ -57,11 +56,6 @@ const Header: React.FC<HeaderProps> = ({ activeTab = "Dashboard" }) => {
             label="Challenges" 
             active={activeTab === "Challenges"} 
             onClick={() => navigate('/challenges')}
-          />
-          <NavItem 
-            label="Rewards" 
-            active={activeTab === "Rewards"}
-            onClick={() => {}} 
           />
         </motion.nav>
       </div>

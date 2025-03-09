@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -17,14 +16,12 @@ const Index = () => {
   const [challengeStarted, setChallengeStarted] = useState(false);
   const { toast } = useToast();
 
-  // Load challenge state and points from localStorage on component mount
   useEffect(() => {
     const savedChallengeStarted = isChallengeStarted();
     setChallengeStarted(savedChallengeStarted);
     setPoints(getUserPoints());
   }, []);
 
-  // Save points to localStorage whenever they change
   useEffect(() => {
     saveUserPoints(points);
   }, [points]);
@@ -44,7 +41,6 @@ const Index = () => {
     setChallengeStarted(true);
     setShowTerms(false);
     
-    // Save challenge state to localStorage
     startChallenge();
     
     toast({
@@ -100,9 +96,6 @@ const Index = () => {
               </div>
               <div className="flex-1">
                 <h2 className="text-xl font-semibold mb-2">Digital Detox Month</h2>
-                <p className="text-gray-600 mb-4">
-                  Reduce your social media usage by 50% over the next 30 days. Track your progress, earn points, and develop healthier digital habits.
-                </p>
                 <Button 
                   className="mt-4 w-full sm:w-auto bg-primary"
                   onClick={handleStartChallenge}

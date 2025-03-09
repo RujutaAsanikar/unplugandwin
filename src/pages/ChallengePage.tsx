@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Trophy, CheckCircle } from 'lucide-react';
@@ -19,14 +18,12 @@ const ChallengePage = () => {
   const [challengeProgress, setChallengeProgress] = useState(0);
   const { toast } = useToast();
 
-  // Load challenge state from localStorage on component mount
   useEffect(() => {
     const savedChallengeStarted = isChallengeStarted();
     
     if (savedChallengeStarted) {
       setChallengeStarted(true);
       
-      // Get latest progress based on screenshots
       const updatedProgress = updateChallengeProgress();
       setChallengeProgress(updatedProgress);
     }
@@ -40,7 +37,6 @@ const ChallengePage = () => {
     setChallengeStarted(true);
     setShowTerms(false);
     
-    // Save challenge state to localStorage
     startChallenge();
     
     toast({
@@ -72,7 +68,6 @@ const ChallengePage = () => {
     }
   };
 
-  // Calculate remaining percentage
   const remainingPercentage = 100 - challengeProgress;
 
   return (
@@ -106,9 +101,6 @@ const ChallengePage = () => {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold mb-2">Digital Detox Month</h2>
-                  <p className="text-gray-600 mb-4">
-                    Reduce your social media usage by 50% over the next 30 days. Track your progress, earn points, and develop healthier digital habits.
-                  </p>
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
                       <Clock className="w-5 h-5 text-gray-400" />
@@ -136,9 +128,6 @@ const ChallengePage = () => {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h2 className="text-xl font-semibold">Digital Detox Month</h2>
-                  <p className="text-gray-600">
-                    Reduce your social media usage by 50% over the next 30 days.
-                  </p>
                 </div>
               </div>
               
