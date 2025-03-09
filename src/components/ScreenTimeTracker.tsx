@@ -2,14 +2,18 @@
 import React, { useState, useRef } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Clock, Upload, Hand, Smartphone } from 'lucide-react';
+import { Clock, Upload, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
 import TimeInputModal from './TimeInputModal';
 import { useToast } from '@/components/ui/use-toast';
 
-const ScreenTimeTracker = () => {
+interface ScreenTimeTrackerProps {
+  onPointsEarned?: (points: number) => void;
+}
+
+const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned }) => {
   const [screenTimeEntries, setScreenTimeEntries] = useState<ScreenTimeEntry[]>([]);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [timeInputModalOpen, setTimeInputModalOpen] = useState(false);
@@ -42,6 +46,11 @@ const ScreenTimeTracker = () => {
         screenshotUrl: selectedImage
       };
       setScreenTimeEntries([...screenTimeEntries, newEntry]);
+      
+      // Award points for new entries
+      if (onPointsEarned) {
+        onPointsEarned(1000);
+      }
     }
 
     // Reset states
@@ -49,7 +58,7 @@ const ScreenTimeTracker = () => {
     setTimeInputModalOpen(false);
 
     toast({
-      title: "Screen time saved",
+      title: "Social media time saved",
       description: `You've recorded ${minutes} minutes for ${new Date(selectedDate).toLocaleDateString()}`,
     });
   };
@@ -64,7 +73,7 @@ const ScreenTimeTracker = () => {
     setScreenTimeEntries(screenTimeEntries.filter(entry => entry.id !== id));
     toast({
       title: "Entry deleted",
-      description: "The screen time entry has been removed",
+      description: "The social media screen time entry has been removed",
     });
   };
 
@@ -99,19 +108,17 @@ const ScreenTimeTracker = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start mt-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex-1 w-full"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-3xl font-bold">Welcome Back! </h1>
-            <Hand className="h-8 w-8 text-yellow-400" />
-          </div>
-        </motion.div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="flex-1 w-full"
+      >
+        <h1 className="text-2xl font-bold mb-4">Social Media Usage Tracker</h1>
+      </motion.div>
+
+      {/* Display Screen Time Graph First */}
+      <ScreenTimeGraph data={screenTimeEntries} />
 
       {/* Screenshots Section */}
       <motion.div
@@ -121,7 +128,7 @@ const ScreenTimeTracker = () => {
         className="glassmorphism p-6"
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Screen Time Screenshots</h2>
+          <h2 className="text-xl font-semibold">Social Media Screen Time</h2>
           <Button 
             onClick={() => setUploadModalOpen(true)} 
             variant="outline"
@@ -133,7 +140,7 @@ const ScreenTimeTracker = () => {
 
         {sortedEntries.length === 0 ? (
           <div className="text-center py-10 text-muted-foreground">
-            No screenshots uploaded yet. Add your first screen time entry.
+            No screenshots uploaded yet. Add your first social media screen time entry.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -188,13 +195,13 @@ const ScreenTimeTracker = () => {
             <Smartphone className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold">Track Your Screen Time</h2>
-            <p className="text-gray-500">Enter your daily screen time to track your progress</p>
+            <h2 className="text-xl font-semibold">Track Your Social Media Usage</h2>
+            <p className="text-gray-500">Enter your daily social media screen time to track your progress</p>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h3 className="font-medium">Today's Screen Time</h3>
+          <h3 className="font-medium">Today's Social Media Time</h3>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button 
               onClick={() => setTimeInputModalOpen(true)}
@@ -206,8 +213,6 @@ const ScreenTimeTracker = () => {
           </div>
         </div>
       </motion.div>
-
-      <ScreenTimeGraph data={screenTimeEntries} />
       
       <UploadModal 
         isOpen={uploadModalOpen} 

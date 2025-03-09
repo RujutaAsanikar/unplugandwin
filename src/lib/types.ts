@@ -11,8 +11,12 @@ export interface Challenge {
   title: string;
   description: string;
   target: number; // Target minutes to reduce
-  duration: 'daily' | 'weekly';
+  duration: 'daily' | 'weekly' | 'monthly';
   completed: boolean;
+  pointsAwarded: number;
+  totalPoints: number;
+  active?: boolean;
+  progress?: number;
 }
 
 export interface Reward {
@@ -21,4 +25,9 @@ export interface Reward {
   description: string;
   unlocked: boolean;
   icon: string;
+}
+
+export interface UserPoints {
+  current: number;
+  target: number;
 }

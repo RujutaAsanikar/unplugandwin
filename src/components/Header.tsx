@@ -2,8 +2,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Hand } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const Header = () => {
+interface HeaderProps {
+  activeTab?: string;
+}
+
+const Header: React.FC<HeaderProps> = ({ activeTab = "Dashboard" }) => {
+  const navigate = useNavigate();
+
   return (
     <header className="w-full border-b border-gray-100">
       {/* Top banner */}
@@ -24,6 +31,8 @@ const Header = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="cursor-pointer"
+          onClick={() => navigate('/')}
         >
           <h1 className="text-3xl md:text-4xl font-bold purple-gradient-text">
             Unplug And Win
@@ -37,9 +46,21 @@ const Header = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          <NavItem label="Dashboard" active />
-          <NavItem label="Challenges" />
-          <NavItem label="Rewards" />
+          <NavItem 
+            label="Dashboard" 
+            active={activeTab === "Dashboard"} 
+            onClick={() => navigate('/')}
+          />
+          <NavItem 
+            label="Challenges" 
+            active={activeTab === "Challenges"} 
+            onClick={() => navigate('/challenges')}
+          />
+          <NavItem 
+            label="Rewards" 
+            active={activeTab === "Rewards"}
+            onClick={() => {}} 
+          />
         </motion.nav>
       </div>
     </header>
@@ -49,9 +70,10 @@ const Header = () => {
 interface NavItemProps {
   label: string;
   active?: boolean;
+  onClick?: () => void;
 }
 
-const NavItem = ({ label, active = false }: NavItemProps) => {
+const NavItem = ({ label, active = false, onClick }: NavItemProps) => {
   return (
     <div 
       className={`px-3 py-2 rounded-lg cursor-pointer transition-all font-medium
@@ -59,6 +81,7 @@ const NavItem = ({ label, active = false }: NavItemProps) => {
           ? 'text-primary' 
           : 'text-gray-500 hover:text-gray-800'
         }`}
+      onClick={onClick}
     >
       <span>{label}</span>
       {active && (
