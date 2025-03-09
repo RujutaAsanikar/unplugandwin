@@ -3,9 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import ScreenTimeTracker from '@/components/ScreenTimeTracker';
-import Rewards from '@/components/Rewards';
-import PointsDisplay from '@/components/PointsDisplay';
 import { getUserPoints, saveUserPoints } from '@/lib/pointsManager';
+import PointsDisplay from '@/components/PointsDisplay';
 
 const Index = () => {
   const [points, setPoints] = useState(getUserPoints());
@@ -35,7 +34,6 @@ const Index = () => {
           <PointsDisplay points={points} />
         </div>
         <ScreenTimeTracker onPointsEarned={handlePointsEarned} />
-        <Rewards />
       </main>
     </motion.div>
   );
