@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Clock, Upload, Smartphone } from 'lucide-react';
@@ -22,14 +21,23 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const savedEntries = localStorage.getItem('screenTimeEntries');
+    if (savedEntries) {
+      setScreenTimeEntries(JSON.parse(savedEntries));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('screenTimeEntries', JSON.stringify(screenTimeEntries));
+  }, [screenTimeEntries]);
+
   const handleAddEntry = (minutes: number) => {
-    // Check if an entry for this date already exists
     const existingEntryIndex = screenTimeEntries.findIndex(
       entry => entry.date === selectedDate
     );
 
     if (existingEntryIndex !== -1) {
-      // Update existing entry
       const updatedEntries = [...screenTimeEntries];
       updatedEntries[existingEntryIndex] = {
         ...updatedEntries[existingEntryIndex],
@@ -38,7 +46,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       };
       setScreenTimeEntries(updatedEntries);
     } else {
-      // Add new entry
       const newEntry: ScreenTimeEntry = {
         id: crypto.randomUUID(),
         date: selectedDate,
@@ -47,13 +54,11 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       };
       setScreenTimeEntries([...screenTimeEntries, newEntry]);
       
-      // Award points for new entries
       if (onPointsEarned) {
         onPointsEarned(1000);
       }
     }
 
-    // Reset states
     setSelectedImage(null);
     setTimeInputModalOpen(false);
 
@@ -77,12 +82,10 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     });
   };
 
-  // Sort entries by date (newest first)
   const sortedEntries = [...screenTimeEntries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -117,10 +120,8 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         <h1 className="text-2xl font-bold mb-4">Social Media Usage Tracker</h1>
       </motion.div>
 
-      {/* Display Screen Time Graph First */}
       <ScreenTimeGraph data={screenTimeEntries} />
 
-      {/* Screenshots Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -183,7 +184,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         )}
       </motion.div>
 
-      {/* Track Time Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,16 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import ScreenTimeTracker from '@/components/ScreenTimeTracker';
 import Rewards from '@/components/Rewards';
 import PointsDisplay from '@/components/PointsDisplay';
+import { getUserPoints, saveUserPoints } from '@/lib/pointsManager';
 
 const Index = () => {
-  const [points, setPoints] = useState({
-    current: 1500,
-    target: 30000
-  });
+  const [points, setPoints] = useState(getUserPoints());
+
+  // Save points to localStorage whenever they change
+  useEffect(() => {
+    saveUserPoints(points);
+  }, [points]);
 
   const handlePointsEarned = (earned: number) => {
     setPoints(prev => ({

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Trophy, CheckCircle } from 'lucide-react';
@@ -6,16 +5,11 @@ import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
-import PointsDisplay from '@/components/PointsDisplay';
 
 const ChallengePage = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [challengeStarted, setChallengeStarted] = useState(false);
   const [challengeProgress, setChallengeProgress] = useState(0);
-  const [points, setPoints] = useState({
-    current: 500,
-    target: 30000
-  });
   const { toast } = useToast();
 
   // Load challenge state from localStorage on component mount
@@ -82,10 +76,6 @@ const ChallengePage = () => {
     >
       <Header activeTab="Challenges" />
       <main className="container max-w-4xl mx-auto py-8 pb-20 px-4">
-        <div className="flex justify-end mb-4">
-          <PointsDisplay points={points} />
-        </div>
-        
         <motion.div
           className="flex flex-col gap-6"
           variants={containerVariants}
@@ -142,7 +132,6 @@ const ChallengePage = () => {
                     Reduce your social media usage by 50% over the next 30 days.
                   </p>
                 </div>
-                <div className="text-xl font-medium text-primary">500 pts</div>
               </div>
               
               <div className="flex items-center gap-4 my-4">
@@ -175,7 +164,7 @@ const ChallengePage = () => {
                   <h3 className="font-medium text-lg text-primary">Reward Progress</h3>
                 </div>
                 <p className="text-gray-600">
-                  Keep going! Only {remainingPercentage}% more to unlock your 500 points reward! 🎉
+                  Keep going! Only {remainingPercentage}% more to unlock your next reward! 🎉
                 </p>
               </div>
               
