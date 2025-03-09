@@ -10,7 +10,7 @@ interface ChallengesProps {
 }
 
 const Challenges: React.FC<ChallengesProps> = ({ onSelectChallenge }) => {
-  // Sample challenges
+  // Sample challenges with required pointsAwarded and totalPoints properties
   const challenges: Challenge[] = [
     {
       id: '1',
@@ -18,7 +18,9 @@ const Challenges: React.FC<ChallengesProps> = ({ onSelectChallenge }) => {
       description: 'Avoid social media for the first hour after waking up',
       target: 60,
       duration: 'daily',
-      completed: false
+      completed: false,
+      pointsAwarded: 100,
+      totalPoints: 1000
     },
     {
       id: '2',
@@ -26,7 +28,9 @@ const Challenges: React.FC<ChallengesProps> = ({ onSelectChallenge }) => {
       description: 'Reduce screen time by 30 minutes before bed',
       target: 30,
       duration: 'daily',
-      completed: false
+      completed: false,
+      pointsAwarded: 200,
+      totalPoints: 2000
     },
     {
       id: '3',
@@ -34,7 +38,9 @@ const Challenges: React.FC<ChallengesProps> = ({ onSelectChallenge }) => {
       description: 'Cut your weekend screen time by 25%',
       target: 120,
       duration: 'weekly',
-      completed: false
+      completed: false,
+      pointsAwarded: 500,
+      totalPoints: 5000
     },
     {
       id: '4',
@@ -42,7 +48,9 @@ const Challenges: React.FC<ChallengesProps> = ({ onSelectChallenge }) => {
       description: 'Limit social media to just 15 minutes during study hours',
       target: 15,
       duration: 'daily',
-      completed: false
+      completed: false,
+      pointsAwarded: 250,
+      totalPoints: 2500
     }
   ];
 

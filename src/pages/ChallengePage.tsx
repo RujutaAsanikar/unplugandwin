@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 const ChallengePage = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [challengeStarted, setChallengeStarted] = useState(false);
-  const [challengeProgress, setChallengeProgress] = useState(35);
+  const [challengeProgress, setChallengeProgress] = useState(0);
   const { toast } = useToast();
 
   const handleStartChallenge = () => {
@@ -48,6 +48,9 @@ const ChallengePage = () => {
       } 
     }
   };
+
+  // Calculate remaining percentage
+  const remainingPercentage = 100 - challengeProgress;
 
   return (
     <motion.div
@@ -111,7 +114,7 @@ const ChallengePage = () => {
                 <div>
                   <h2 className="text-xl font-semibold">Digital Detox Month</h2>
                   <p className="text-gray-600">
-                    Keep your phone away every Sunday for the entire month. Build a habit of offline Sundays.
+                    Reduce your social media usage by 50% over the next 30 days.
                   </p>
                 </div>
                 <div className="text-xl font-medium text-primary">500 pts</div>
@@ -147,7 +150,7 @@ const ChallengePage = () => {
                   <h3 className="font-medium text-lg text-primary">Reward Progress</h3>
                 </div>
                 <p className="text-gray-600">
-                  Keep going! Only {100 - challengeProgress}% more to unlock your 500 points reward! 🎉
+                  Keep going! Only {remainingPercentage}% more to unlock your 500 points reward! 🎉
                 </p>
               </div>
               
