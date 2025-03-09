@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Clock } from 'lucide-react';
+import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface TimeInputModalProps {
@@ -19,27 +19,8 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
   onSubmit,
   selectedDate
 }) => {
-  const [hours, setHours] = useState<number>(0);
-  const [minutes, setMinutes] = useState<number>(0);
-
-  const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0 && value <= 24) {
-      setHours(value);
-    }
-  };
-
-  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0 && value <= 59) {
-      setMinutes(value);
-    }
-  };
-
-  const handleSubmit = () => {
-    const totalMinutes = (hours * 60) + minutes;
-    onSubmit(totalMinutes);
-  };
+  const [totalMinutes, setTotalMinutes] = useState<number>(0);
+  const [sliderValue, setSliderValue] = useState<number>(0);
 
   // Format date
   const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
@@ -47,6 +28,40 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
     month: 'long',
     day: 'numeric'
   });
+
+  // Convert total minutes to hours and minutes for display
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      setTotalMinutes(value);
+      setSliderValue(value);
+    }
+  };
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    setSliderValue(value);
+    setTotalMinutes(value);
+  };
+
+  const increaseMinutes = () => {
+    const newValue = totalMinutes + 5;
+    setTotalMinutes(newValue);
+    setSliderValue(newValue);
+  };
+
+  const decreaseMinutes = () => {
+    const newValue = Math.max(0, totalMinutes - 5);
+    setTotalMinutes(newValue);
+    setSliderValue(newValue);
+  };
+
+  const handleSubmit = () => {
+    onSubmit(totalMinutes);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -57,48 +72,62 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
         
         <div className="space-y-6 py-4">
           <p className="text-sm text-muted-foreground">
-            How much time did you spend on social media on {formattedDate}?
+            Enter how much time you spent on social media on {formattedDate}.
           </p>
           
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label htmlFor="hours" className="block text-sm font-medium text-gray-700 mb-1">Hours</label>
+          <div className="flex items-center gap-3">
+            <Clock className="h-6 w-6 text-muted-foreground" />
+            <div className="flex-1 flex items-center">
               <Input 
-                id="hours"
                 type="number" 
-                value={hours} 
-                onChange={handleHoursChange}
-                min={0}
-                max={24}
-                className="w-full"
-                placeholder="Hours"
-              />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="minutes" className="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
-              <Input 
-                id="minutes"
-                type="number" 
-                value={minutes} 
+                value={totalMinutes} 
                 onChange={handleMinutesChange}
                 min={0}
-                max={59}
-                className="w-full"
-                placeholder="Minutes"
+                className="w-full text-center text-lg"
               />
             </div>
+            <div className="flex flex-col">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={increaseMinutes}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={decreaseMinutes}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </div>
+            <span className="text-muted-foreground text-lg">minutes</span>
+          </div>
+          
+          <div className="w-full px-1 py-4">
+            <input
+              type="range"
+              min="0"
+              max="600"
+              value={sliderValue}
+              onChange={handleSliderChange}
+              className="w-full accent-primary"
+            />
           </div>
           
           <motion.div 
-            className="text-center bg-secondary/50 py-3 px-4 rounded-lg"
+            className="text-center bg-secondary/50 py-6 px-4 rounded-lg"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           >
-            <div className="text-3xl font-medium text-foreground">
+            <div className="text-4xl font-medium text-foreground">
               {hours}h {minutes}m
             </div>
-            <div className="text-xs text-muted-foreground mt-1">Total screen time</div>
+            <div className="text-sm text-muted-foreground mt-1">Total screen time</div>
           </motion.div>
         </div>
         
@@ -107,15 +136,16 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
             type="button"
             variant="outline"
             onClick={onClose}
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
           >
-            Log Time
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>
