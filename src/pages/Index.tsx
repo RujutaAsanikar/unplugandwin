@@ -5,9 +5,24 @@ import Header from '@/components/Header';
 import ScreenTimeTracker from '@/components/ScreenTimeTracker';
 import { getUserPoints, saveUserPoints } from '@/lib/pointsManager';
 import PointsDisplay from '@/components/PointsDisplay';
+import { Trophy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import TermsModal from '@/components/TermsModal';
+import { useToast } from '@/components/ui/use-toast';
+import { isChallengeStarted, startChallenge } from '@/lib/challengeManager';
 
 const Index = () => {
   const [points, setPoints] = useState(getUserPoints());
+  const [showTerms, setShowTerms] = useState(false);
+  const [challengeStarted, setChallengeStarted] = useState(false);
+  const { toast } = useToast();
+
+  // Load challenge state and points from localStorage on component mount
+  useEffect(() => {
+    const savedChallengeStarted = isChallengeStarted();
+    setChallengeStarted(savedChallengeStarted);
+    setPoints(getUserPoints());
+  }, []);
 
   // Save points to localStorage whenever they change
   useEffect(() => {
@@ -19,6 +34,46 @@ const Index = () => {
       ...prev,
       current: prev.current + earned
     }));
+  };
+
+  const handleStartChallenge = () => {
+    setShowTerms(true);
+  };
+
+  const handleAcceptTerms = () => {
+    setChallengeStarted(true);
+    setShowTerms(false);
+    
+    // Save challenge state to localStorage
+    startChallenge();
+    
+    toast({
+      title: "Challenge started!",
+      description: "You've successfully started the 30-day social media reduction challenge",
+    });
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      } 
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.5,
+        ease: [0.22, 1, 0.36, 1]
+      } 
+    }
   };
 
   return (
@@ -33,7 +88,40 @@ const Index = () => {
         <div className="px-4 mb-6 flex justify-end">
           <PointsDisplay points={points} />
         </div>
+
+        {!challengeStarted && (
+          <motion.div 
+            variants={itemVariants}
+            className="mb-8 mx-4 glassmorphism rounded-xl p-6 border border-primary/30 shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)]"
+          >
+            <div className="flex gap-6 items-start">
+              <div className="w-14 h-14 flex-shrink-0 bg-primary/10 rounded-full flex items-center justify-center">
+                <Trophy className="w-7 h-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold mb-2">Digital Detox Month</h2>
+                <p className="text-gray-600 mb-4">
+                  Reduce your social media usage by 50% over the next 30 days. Track your progress, earn points, and develop healthier digital habits.
+                </p>
+                <Button 
+                  className="mt-4 w-full sm:w-auto bg-primary"
+                  onClick={handleStartChallenge}
+                >
+                  Start Challenge
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <ScreenTimeTracker onPointsEarned={handlePointsEarned} />
+        
+        <TermsModal 
+          isOpen={showTerms} 
+          onClose={() => setShowTerms(false)} 
+          onAccept={handleAcceptTerms}
+          challengeName="Digital Detox Month"
+        />
       </main>
     </motion.div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
 import TimeInputModal from './TimeInputModal';
 import { useToast } from '@/components/ui/use-toast';
+import { updateChallengeProgress } from '@/lib/challengeManager';
 
 interface ScreenTimeTrackerProps {
   onPointsEarned?: (points: number) => void;
@@ -53,6 +55,9 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         screenshotUrl: selectedImage
       };
       setScreenTimeEntries([...screenTimeEntries, newEntry]);
+      
+      // Update challenge progress when a new screenshot is added
+      const updatedProgress = updateChallengeProgress();
       
       if (onPointsEarned) {
         onPointsEarned(1000);

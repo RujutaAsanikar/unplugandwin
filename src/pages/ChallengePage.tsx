@@ -6,6 +6,12 @@ import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
+import { 
+  getChallengeProgress, 
+  startChallenge, 
+  isChallengeStarted,
+  updateChallengeProgress
+} from '@/lib/challengeManager';
 
 const ChallengePage = () => {
   const [showTerms, setShowTerms] = useState(false);
@@ -15,12 +21,14 @@ const ChallengePage = () => {
 
   // Load challenge state from localStorage on component mount
   useEffect(() => {
-    const savedChallengeStarted = localStorage.getItem('challengeStarted') === 'true';
-    const savedChallengeProgress = parseInt(localStorage.getItem('challengeProgress') || '0');
+    const savedChallengeStarted = isChallengeStarted();
     
     if (savedChallengeStarted) {
       setChallengeStarted(true);
-      setChallengeProgress(savedChallengeProgress);
+      
+      // Get latest progress based on screenshots
+      const updatedProgress = updateChallengeProgress();
+      setChallengeProgress(updatedProgress);
     }
   }, []);
 
@@ -33,8 +41,7 @@ const ChallengePage = () => {
     setShowTerms(false);
     
     // Save challenge state to localStorage
-    localStorage.setItem('challengeStarted', 'true');
-    localStorage.setItem('challengeProgress', '0');
+    startChallenge();
     
     toast({
       title: "Challenge started!",
