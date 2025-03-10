@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -133,12 +134,12 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         transition={{ duration: 0.5, delay: 0.3 }}
         className="glassmorphism p-6"
       >
-        <div className={`${isMobile ? 'flex flex-col' : 'flex justify-between'} items-center mb-4`}>
+        <div className="flex flex-col items-center mb-4">
           <h2 className="text-xl font-semibold mb-2 sm:mb-0 whitespace-nowrap">Social Media Screen Time</h2>
           <Button 
             onClick={() => setUploadModalOpen(true)} 
             variant="outline"
-            className="button-hover w-full sm:w-auto"
+            className="button-hover w-full sm:w-auto mt-2"
           >
             <Upload className="mr-2 h-4 w-4" /> Upload Screenshot
           </Button>
@@ -189,38 +190,18 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         )}
       </motion.div>
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="glassmorphism p-6"
-      >
-        <div className="space-y-4">
-          <h3 className="font-medium">Today's Social Media Time</h3>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button 
-              onClick={() => setTimeInputModalOpen(true)}
-              size="lg" 
-              className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
-            >
-              <Clock className="mr-2 h-5 w-5" /> Log Time
-            </Button>
-          </div>
-        </div>
-      </motion.div>
+      <TimeInputModal 
+        isOpen={timeInputModalOpen} 
+        onClose={() => setTimeInputModalOpen(false)} 
+        onSubmit={handleAddEntry}
+        selectedDate={selectedDate}
+      />
       
       <UploadModal 
         isOpen={uploadModalOpen} 
         onClose={() => setUploadModalOpen(false)} 
         onUpload={handleImageUpload} 
         onSelectDate={setSelectedDate}
-        selectedDate={selectedDate}
-      />
-      
-      <TimeInputModal 
-        isOpen={timeInputModalOpen} 
-        onClose={() => setTimeInputModalOpen(false)} 
-        onSubmit={handleAddEntry}
         selectedDate={selectedDate}
       />
     </div>

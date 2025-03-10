@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
@@ -19,7 +19,7 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
   onSubmit,
   selectedDate
 }) => {
-  const [totalMinutes, setTotalMinutes] = useState<number>(0);
+  const [hours, setHours] = useState<number>(0);
   const [sliderValue, setSliderValue] = useState<number>(0);
 
   // Format date
@@ -29,38 +29,36 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
     day: 'numeric'
   });
 
-  // Convert total minutes to hours and minutes for display
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0) {
-      setTotalMinutes(value);
+  const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value >= 0 && value <= 24) {
+      setHours(value);
+      // Convert hours to minutes for the backend
       setSliderValue(value);
     }
   };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
+    const value = parseFloat(e.target.value);
     setSliderValue(value);
-    setTotalMinutes(value);
+    setHours(value);
   };
 
-  const increaseMinutes = () => {
-    const newValue = totalMinutes + 5;
-    setTotalMinutes(newValue);
+  const increaseHours = () => {
+    const newValue = Math.min(24, hours + 0.5);
+    setHours(newValue);
     setSliderValue(newValue);
   };
 
-  const decreaseMinutes = () => {
-    const newValue = Math.max(0, totalMinutes - 5);
-    setTotalMinutes(newValue);
+  const decreaseHours = () => {
+    const newValue = Math.max(0, hours - 0.5);
+    setHours(newValue);
     setSliderValue(newValue);
   };
 
   const handleSubmit = () => {
-    onSubmit(totalMinutes);
+    // Convert hours to minutes for storage
+    onSubmit(Math.round(hours * 60));
   };
 
   return (
@@ -68,21 +66,22 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Enter Screen Time</DialogTitle>
+          <DialogDescription>
+            Enter how much time you spent on social media on {formattedDate}.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          <p className="text-sm text-muted-foreground">
-            Enter how much time you spent on social media on {formattedDate}.
-          </p>
-          
           <div className="flex items-center gap-3">
             <Clock className="h-6 w-6 text-muted-foreground" />
             <div className="flex-1 flex items-center">
               <Input 
                 type="number" 
-                value={totalMinutes} 
-                onChange={handleMinutesChange}
+                value={hours} 
+                onChange={handleHoursChange}
                 min={0}
+                max={24}
+                step={0.5}
                 className="w-full text-center text-lg"
               />
             </div>
@@ -91,7 +90,7 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8" 
-                onClick={increaseMinutes}
+                onClick={increaseHours}
               >
                 <ChevronUp className="h-4 w-4" />
               </Button>
@@ -99,19 +98,20 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8" 
-                onClick={decreaseMinutes}
+                onClick={decreaseHours}
               >
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </div>
-            <span className="text-muted-foreground text-lg">minutes</span>
+            <span className="text-muted-foreground text-lg">hours</span>
           </div>
           
           <div className="w-full px-1 py-4">
             <input
               type="range"
               min="0"
-              max="600"
+              max="24"
+              step="0.5"
               value={sliderValue}
               onChange={handleSliderChange}
               className="w-full accent-primary"
@@ -125,7 +125,7 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           >
             <div className="text-4xl font-medium text-foreground">
-              {hours}h {minutes}m
+              {Math.floor(hours)}h {Math.round((hours % 1) * 60)}m
             </div>
             <div className="text-sm text-muted-foreground mt-1">Total screen time</div>
           </motion.div>
