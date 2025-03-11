@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Clock, Upload, Smartphone } from 'lucide-react';
+import { Clock, Upload, Smartphone, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
@@ -10,6 +10,9 @@ import TimeInputModal from './TimeInputModal';
 import { useToast } from '@/components/ui/use-toast';
 import { updateChallengeProgress } from '@/lib/challengeManager';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
+import AuthModal from './AuthModal';
 
 interface ScreenTimeTrackerProps {
   onPointsEarned?: (points: number) => void;
@@ -19,59 +22,172 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const [screenTimeEntries, setScreenTimeEntries] = useState<ScreenTimeEntry[]>([]);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [timeInputModalOpen, setTimeInputModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Load entries from Supabase when user logs in
   useEffect(() => {
-    const savedEntries = localStorage.getItem('screenTimeEntries');
-    if (savedEntries) {
-      setScreenTimeEntries(JSON.parse(savedEntries));
+    if (user) {
+      fetchEntries();
     }
-  }, []);
+  }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('screenTimeEntries', JSON.stringify(screenTimeEntries));
-  }, [screenTimeEntries]);
-
-  const handleAddEntry = (minutes: number) => {
-    const existingEntryIndex = screenTimeEntries.findIndex(
-      entry => entry.date === selectedDate
-    );
-
-    if (existingEntryIndex !== -1) {
-      const updatedEntries = [...screenTimeEntries];
-      updatedEntries[existingEntryIndex] = {
-        ...updatedEntries[existingEntryIndex],
-        minutes,
-        screenshotUrl: selectedImage || updatedEntries[existingEntryIndex].screenshotUrl
-      };
-      setScreenTimeEntries(updatedEntries);
-    } else {
-      const newEntry: ScreenTimeEntry = {
-        id: crypto.randomUUID(),
-        date: selectedDate,
-        minutes,
-        screenshotUrl: selectedImage
-      };
-      setScreenTimeEntries([...screenTimeEntries, newEntry]);
+  const fetchEntries = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
       
-      const updatedProgress = updateChallengeProgress();
+      // Fetch screen time entries for the current user
+      const { data, error } = await supabase
+        .from('screen_time_entries')
+        .select(`
+          id,
+          date,
+          hours,
+          screenshots (id, storage_path)
+        `)
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+        
+      if (error) throw error;
       
-      if (onPointsEarned) {
-        onPointsEarned(1000);
+      if (data) {
+        // Convert hours to minutes and format the data
+        const formattedEntries: ScreenTimeEntry[] = data.map(entry => ({
+          id: entry.id,
+          date: entry.date,
+          minutes: Math.round(entry.hours * 60),
+          screenshotUrl: entry.screenshots && entry.screenshots.length > 0 
+            ? entry.screenshots[0].storage_path 
+            : undefined
+        }));
+        
+        setScreenTimeEntries(formattedEntries);
       }
+    } catch (error) {
+      console.error('Error fetching entries:', error);
+      toast({
+        title: "Failed to load entries",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    setSelectedImage(null);
-    setTimeInputModalOpen(false);
+  const handleAddEntry = async (minutes: number) => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    
+    try {
+      // Convert minutes to hours for storage
+      const hours = minutes / 60;
+      
+      // Check if there's an entry for this date
+      const existingEntryIndex = screenTimeEntries.findIndex(
+        entry => entry.date === selectedDate
+      );
+      
+      if (existingEntryIndex !== -1) {
+        // Update existing entry
+        const existingEntry = screenTimeEntries[existingEntryIndex];
+        
+        // Update in Supabase
+        const { error } = await supabase
+          .from('screen_time_entries')
+          .update({ hours })
+          .eq('id', existingEntry.id);
+          
+        if (error) throw error;
+        
+        if (selectedImage) {
+          // Add screenshot
+          const { error: screenshotError } = await supabase
+            .from('screenshots')
+            .insert({
+              screen_time_entry_id: existingEntry.id,
+              storage_path: selectedImage
+            });
+            
+          if (screenshotError) throw screenshotError;
+        }
+        
+        // Update local state
+        const updatedEntries = [...screenTimeEntries];
+        updatedEntries[existingEntryIndex] = {
+          ...existingEntry,
+          minutes,
+          screenshotUrl: selectedImage || existingEntry.screenshotUrl
+        };
+        
+        setScreenTimeEntries(updatedEntries);
+      } else {
+        // Create new entry
+        const { data, error } = await supabase
+          .from('screen_time_entries')
+          .insert({
+            user_id: user.id,
+            date: selectedDate,
+            hours
+          })
+          .select('id')
+          .single();
+          
+        if (error) throw error;
+        
+        if (selectedImage && data.id) {
+          // Add screenshot
+          const { error: screenshotError } = await supabase
+            .from('screenshots')
+            .insert({
+              screen_time_entry_id: data.id,
+              storage_path: selectedImage
+            });
+            
+          if (screenshotError) throw screenshotError;
+        }
+        
+        // Update local state
+        const newEntry: ScreenTimeEntry = {
+          id: data.id,
+          date: selectedDate,
+          minutes,
+          screenshotUrl: selectedImage
+        };
+        
+        setScreenTimeEntries([newEntry, ...screenTimeEntries]);
+        
+        const updatedProgress = updateChallengeProgress();
+        
+        if (onPointsEarned) {
+          onPointsEarned(1000);
+        }
+      }
 
-    toast({
-      title: "Social media time saved",
-      description: `You've recorded ${minutes} minutes for ${new Date(selectedDate).toLocaleDateString()}`,
-    });
+      setSelectedImage(null);
+      setTimeInputModalOpen(false);
+
+      toast({
+        title: "Social media time saved",
+        description: `You've recorded ${minutes} minutes for ${new Date(selectedDate).toLocaleDateString()}`,
+      });
+    } catch (error) {
+      console.error('Error adding entry:', error);
+      toast({
+        title: "Failed to save entry",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleImageUpload = (imageUrl: string) => {
@@ -80,12 +196,42 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     setTimeInputModalOpen(true);
   };
 
-  const handleDeleteEntry = (id: string) => {
-    setScreenTimeEntries(screenTimeEntries.filter(entry => entry.id !== id));
-    toast({
-      title: "Entry deleted",
-      description: "The social media screen time entry has been removed",
-    });
+  const handleDeleteEntry = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('screen_time_entries')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setScreenTimeEntries(screenTimeEntries.filter(entry => entry.id !== id));
+      
+      toast({
+        title: "Entry deleted",
+        description: "The social media screen time entry has been removed",
+      });
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast({
+        title: "Failed to delete entry",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddScreenTime = () => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    
+    setUploadModalOpen(true);
   };
 
   const sortedEntries = [...screenTimeEntries].sort(
@@ -137,7 +283,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         <div className="flex flex-col items-center mb-4">
           <h2 className="text-xl font-semibold mb-2 sm:mb-0 whitespace-nowrap">Social Media Screen Time</h2>
           <Button 
-            onClick={() => setUploadModalOpen(true)} 
+            onClick={handleAddScreenTime} 
             variant="outline"
             className="button-hover w-full sm:w-auto mt-2"
           >
@@ -145,48 +291,74 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           </Button>
         </div>
 
-        {sortedEntries.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
-            No screenshots uploaded yet. Add your first social media screen time entry.
+        {!user && (
+          <div className="text-center p-4 bg-primary/5 rounded-lg mb-4">
+            <AlertCircle className="mx-auto h-6 w-6 text-primary mb-2" />
+            <p className="text-sm font-medium mb-2">Sign in to track your screen time</p>
+            <Button 
+              onClick={() => setAuthModalOpen(true)}
+              className="bg-primary hover:bg-primary/90"
+              size="sm"
+            >
+              Sign In / Sign Up
+            </Button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-10">
+            <div className="h-8 w-8 mx-auto mb-4 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-muted-foreground">Loading your entries...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {sortedEntries.map((entry) => (
-              <motion.div
-                key={entry.id}
-                className="overflow-hidden rounded-lg border border-gray-100 shadow-sm"
-                layout
-              >
-                <div className="relative aspect-video bg-gray-50">
-                  {entry.screenshotUrl ? (
-                    <img
-                      src={entry.screenshotUrl}
-                      alt={`Screenshot from ${entry.date}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Clock className="w-8 h-8 text-gray-300" />
+          <>
+            {sortedEntries.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                {user 
+                  ? "No screenshots uploaded yet. Add your first social media screen time entry."
+                  : "Sign in to start tracking your social media usage."
+                }
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {sortedEntries.map((entry) => (
+                  <motion.div
+                    key={entry.id}
+                    className="overflow-hidden rounded-lg border border-gray-100 shadow-sm"
+                    layout
+                  >
+                    <div className="relative aspect-video bg-gray-50">
+                      {entry.screenshotUrl ? (
+                        <img
+                          src={entry.screenshotUrl}
+                          alt={`Screenshot from ${entry.date}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Clock className="w-8 h-8 text-gray-300" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                <div className="p-3">
-                  <time className="text-xs text-gray-500 block">
-                    {new Date(entry.date).toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </time>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Clock className="h-3 w-3 text-primary" />
-                    <span className="text-sm font-medium">{entry.minutes} minutes</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                    
+                    <div className="p-3">
+                      <time className="text-xs text-gray-500 block">
+                        {new Date(entry.date).toLocaleDateString('en-US', { 
+                          weekday: 'short', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </time>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Clock className="h-3 w-3 text-primary" />
+                        <span className="text-sm font-medium">{entry.minutes} minutes</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </motion.div>
       
@@ -203,6 +375,12 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         onUpload={handleImageUpload} 
         onSelectDate={setSelectedDate}
         selectedDate={selectedDate}
+      />
+      
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode="signup"
       />
     </div>
   );

@@ -9,13 +9,91 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      screen_time_entries: {
+        Row: {
+          created_at: string | null
+          date: string
+          hours: number
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          hours: number
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          hours?: number
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      screenshots: {
+        Row: {
+          created_at: string | null
+          id: string
+          screen_time_entry_id: string | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          screen_time_entry_id?: string | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          screen_time_entry_id?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screenshots_screen_time_entry_id_fkey"
+            columns: ["screen_time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "screen_time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

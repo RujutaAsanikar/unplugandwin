@@ -4,6 +4,7 @@ export interface ScreenTimeEntry {
   date: string;
   minutes: number;
   screenshotUrl?: string;
+  user_id?: string;
 }
 
 export interface Challenge {

@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar, Upload, Image, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/components/ui/use-toast';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -23,7 +26,11 @@ const UploadModal: React.FC<UploadModalProps> = ({
 }) => {
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -45,9 +52,15 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const processFile = (file: File) => {
     // Check file is an image
     if (!file.type.startsWith('image/')) {
-      console.error('File must be an image');
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file (PNG, JPG, GIF)",
+        variant: "destructive"
+      });
       return;
     }
+    
+    setFile(file);
     
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -56,14 +69,63 @@ const UploadModal: React.FC<UploadModalProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handleContinue = () => {
-    if (preview) {
-      onUpload(preview);
+  const uploadToSupabase = async () => {
+    if (!file || !user) return null;
+    
+    try {
+      setUploading(true);
+      
+      // Format: {user_id}/{timestamp}_{filename}
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('screenshots')
+        .upload(filePath, file);
+        
+      if (error) throw error;
+      
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('screenshots')
+        .getPublicUrl(filePath);
+        
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleContinue = async () => {
+    if (!preview) return;
+    
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload screenshots",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const imageUrl = await uploadToSupabase();
+    
+    if (imageUrl) {
+      onUpload(imageUrl);
     }
   };
 
   const handleRemovePreview = () => {
     setPreview(null);
+    setFile(null);
   };
 
   return (
@@ -156,11 +218,18 @@ const UploadModal: React.FC<UploadModalProps> = ({
           </Button>
           <Button
             type="button"
-            disabled={!preview}
+            disabled={!preview || uploading}
             onClick={handleContinue}
             className="button-hover bg-primary hover:bg-primary/90"
           >
-            Continue
+            {uploading ? (
+              <>
+                <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Uploading...
+              </>
+            ) : (
+              'Continue'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
