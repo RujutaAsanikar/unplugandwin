@@ -58,19 +58,31 @@ const AdminPage = () => {
   const fetchCompletedChallenges = async () => {
     try {
       // Get users who have 30 or more entries
-      const { data: completedData, error: completedError } = await supabase
+      // Use count instead of group since group is not available
+      const { data: entryCounts, error: countError } = await supabase
         .from('screen_time_entries')
-        .select('user_id, count(*)')
-        .group('user_id')
-        .having('count(*) >= 30');
+        .select('user_id, id')
+        .order('created_at', { ascending: false });
 
-      if (completedError) throw completedError;
+      if (countError) throw countError;
 
-      if (completedData && completedData.length > 0) {
-        const userIds = completedData.map(item => item.user_id);
-        
-        // Get user info from auth table via profiles
-        const userData = await Promise.all(userIds.map(async (userId) => {
+      // Process the data to count entries per user
+      const userEntryCount = new Map<string, number>();
+      
+      if (entryCounts) {
+        entryCounts.forEach(entry => {
+          const userId = entry.user_id;
+          userEntryCount.set(userId, (userEntryCount.get(userId) || 0) + 1);
+        });
+      }
+      
+      // Filter users with 30+ entries
+      const completedUserIds = Array.from(userEntryCount.entries())
+        .filter(([_, count]) => count >= 30)
+        .map(([userId]) => userId);
+
+      if (completedUserIds.length > 0) {
+        const userData = await Promise.all(completedUserIds.map(async (userId) => {
           // Get user details
           const { data: userDetails } = await supabase.auth.admin.getUserById(userId);
           
@@ -125,7 +137,7 @@ const AdminPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
-      <Header activeTab="Admin" />
+      <Header activeTab="Dashboard" />
       <main className="container max-w-4xl mx-auto py-8 pb-20 px-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">

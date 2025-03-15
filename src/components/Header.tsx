@@ -2,11 +2,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, DollarSign, BarChart3, Home } from 'lucide-react';
+import { Trophy, DollarSign, BarChart3, Home, Shield } from 'lucide-react';
 import AuthButton from './AuthButton';
 
 interface HeaderProps {
-  activeTab: 'Dashboard' | 'Challenges' | 'Rewards';
+  activeTab: 'Dashboard' | 'Challenges' | 'Rewards' | 'Admin';
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab }) => {
