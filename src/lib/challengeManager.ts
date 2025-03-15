@@ -50,8 +50,16 @@ export const getEntriesCount = async (userId?: string): Promise<number> => {
   }
 };
 
+// Check if challenge was just completed
+export const isJustCompleted = (previousProgress: number, newProgress: number): boolean => {
+  return previousProgress < 100 && newProgress === 100;
+};
+
 // Update challenge progress based on screenshot count
 export const updateChallengeProgress = async (userId?: string): Promise<number> => {
+  // Get previous progress
+  const previousProgress = getChallengeProgress();
+  
   // Get number of entries
   const entriesCount = await getEntriesCount(userId);
   

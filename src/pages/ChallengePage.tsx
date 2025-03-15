@@ -16,6 +16,7 @@ import {
   getRemainingScreenshots
 } from '@/lib/challengeManager';
 import { supabase } from '@/integrations/supabase/client';
+import ConfettiOverlay from '@/components/ConfettiOverlay';
 
 const ChallengePage = () => {
   const [showTerms, setShowTerms] = useState(false);
@@ -23,6 +24,8 @@ const ChallengePage = () => {
   const [challengeProgress, setChallengeProgress] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [remainingScreenshots, setRemainingScreenshots] = useState(30);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [completedRecently, setCompletedRecently] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -31,7 +34,6 @@ const ChallengePage = () => {
     
     if (savedChallengeStarted) {
       setChallengeStarted(true);
-      
       loadProgress();
     }
 
@@ -39,6 +41,14 @@ const ChallengePage = () => {
       checkAdminStatus();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Check if challenge was just completed
+    if (challengeProgress === 100 && !completedRecently) {
+      setCompletedRecently(true);
+      setShowConfetti(true);
+    }
+  }, [challengeProgress]);
 
   const loadProgress = async () => {
     const updatedProgress = await updateChallengeProgress(user?.id);
@@ -246,6 +256,11 @@ const ChallengePage = () => {
           onClose={() => setShowTerms(false)} 
           onAccept={handleAcceptTerms}
           challengeName="Digital Detox Month"
+        />
+
+        <ConfettiOverlay 
+          isVisible={showConfetti} 
+          onClose={() => setShowConfetti(false)} 
         />
       </main>
     </motion.div>
