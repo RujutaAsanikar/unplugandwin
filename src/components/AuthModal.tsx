@@ -130,7 +130,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
             onClick={toggleMode}
             className="text-primary hover:text-primary/80"
           >
-            {mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+            {mode === 'login' 
+              ? 'Don\'t have an account? Sign Up' 
+              : 'Already have an account? Sign In'}
           </Button>
         </DialogFooter>
       </DialogContent>
