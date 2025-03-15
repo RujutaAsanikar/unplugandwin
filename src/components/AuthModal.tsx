@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -104,7 +104,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
             >
               <Button 
                 type="submit" 
-                className="w-full bg-primary" 
+                className="w-full bg-primary hover:bg-primary/90" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -114,7 +114,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    {mode === 'login' ? 'Sign In' : 'Create Account'}
+                    {mode === 'login' ? 'Sign In' : 'Sign Up'}
                     <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
@@ -123,12 +123,12 @@ const AuthModal: React.FC<AuthModalProps> = ({
           </AnimatePresence>
         </form>
         
-        <DialogFooter className="sm:justify-start flex flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex flex-col items-center sm:flex-row sm:justify-center">
           <Button
             type="button"
             variant="link"
             onClick={toggleMode}
-            className="w-full sm:w-auto"
+            className="text-primary hover:text-primary/80"
           >
             {mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
           </Button>
