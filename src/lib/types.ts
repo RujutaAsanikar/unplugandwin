@@ -18,6 +18,8 @@ export interface Challenge {
   totalPoints: number;
   active?: boolean;
   progress?: number;
+  completedBy?: string[]; // Array of user IDs who completed the challenge
+  completionDate?: string; // Date when the challenge was completed
 }
 
 export interface Reward {
@@ -26,6 +28,8 @@ export interface Reward {
   description: string;
   unlocked: boolean;
   icon: string;
+  progress?: number; // Percentage progress towards unlocking the reward
+  requiredScreenshots?: number; // Number of screenshots needed to unlock
 }
 
 export interface UserPoints {

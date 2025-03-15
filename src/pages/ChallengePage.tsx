@@ -1,22 +1,30 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Trophy, CheckCircle } from 'lucide-react';
+import { Clock, Trophy, CheckCircle, Upload, Shield } from 'lucide-react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/lib/auth';
 import { 
   getChallengeProgress, 
   startChallenge, 
   isChallengeStarted,
-  updateChallengeProgress
+  updateChallengeProgress,
+  getRemainingScreenshots
 } from '@/lib/challengeManager';
+import { supabase } from '@/integrations/supabase/client';
 
 const ChallengePage = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [challengeStarted, setChallengeStarted] = useState(false);
   const [challengeProgress, setChallengeProgress] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [remainingScreenshots, setRemainingScreenshots] = useState(30);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const savedChallengeStarted = isChallengeStarted();
@@ -24,10 +32,35 @@ const ChallengePage = () => {
     if (savedChallengeStarted) {
       setChallengeStarted(true);
       
-      const updatedProgress = updateChallengeProgress();
-      setChallengeProgress(updatedProgress);
+      loadProgress();
     }
-  }, []);
+
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user]);
+
+  const loadProgress = async () => {
+    const updatedProgress = await updateChallengeProgress(user?.id);
+    setChallengeProgress(updatedProgress);
+    
+    const remaining = await getRemainingScreenshots(user?.id);
+    setRemainingScreenshots(remaining);
+  };
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.rpc('is_admin', { user_id: user.id });
+      
+      if (error) throw error;
+      
+      setIsAdmin(!!data);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
 
   const handleStartChallenge = () => {
     setShowTerms(true);
@@ -79,6 +112,17 @@ const ChallengePage = () => {
     >
       <Header activeTab="Challenges" />
       <main className="container max-w-4xl mx-auto py-8 pb-20 px-4">
+        {isAdmin && (
+          <div className="mb-6">
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/admin">
+                <Shield className="h-4 w-4" />
+                Admin Dashboard
+              </Link>
+            </Button>
+          </div>
+        )}
+        
         <motion.div
           className="flex flex-col gap-6"
           variants={containerVariants}
@@ -142,7 +186,7 @@ const ChallengePage = () => {
                 </div>
               </div>
               
-              <div>
+              <div className="mb-6">
                 <div className="flex justify-between mb-2">
                   <h3 className="font-medium">Progress</h3>
                   <span>{challengeProgress}%</span>
@@ -160,9 +204,34 @@ const ChallengePage = () => {
                   <Trophy className="w-5 h-5 text-primary" />
                   <h3 className="font-medium text-lg text-primary">Reward Progress</h3>
                 </div>
-                <p className="text-gray-600">
-                  Keep going! Only {remainingPercentage}% more to unlock your next reward! 🎉
-                </p>
+                {challengeProgress < 100 ? (
+                  <div className="space-y-2">
+                    <p className="text-gray-600">
+                      {remainingScreenshots > 0 ? (
+                        <>You need to upload <strong>{remainingScreenshots} more screenshot{remainingScreenshots !== 1 ? 's' : ''}</strong> to complete the challenge!</>
+                      ) : (
+                        <>Almost there! Complete your uploads to unlock your reward.</>
+                      )}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button asChild size="sm" variant="outline" className="gap-1">
+                        <Link to="/">
+                          <Upload className="h-3 w-3 mr-1" />
+                          Upload Screenshots
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-2">
+                    <p className="text-green-600 font-medium">
+                      Challenge completed! 🎉
+                    </p>
+                    <p className="text-gray-600 mt-1">
+                      You've earned the full 30,000 points reward!
+                    </p>
+                  </div>
+                )}
               </div>
               
               <div className="mt-4 p-4 bg-gray-50 rounded-xl text-center">
