@@ -104,7 +104,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
             >
               <Button 
                 type="submit" 
-                className="w-full bg-primary hover:bg-primary/90" 
+                className="w-full" 
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#9b87f5" }}
               >
@@ -132,8 +132,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
             className="text-primary hover:text-primary/80"
           >
             {mode === 'login' 
-              ? 'Don\'t have an account? Sign Up' 
-              : 'Already have an account? Sign In'}
+              ? "Don't have an account? Sign Up" 
+              : "Already have an account? Sign In"}
           </Button>
         </DialogFooter>
       </DialogContent>
