@@ -52,7 +52,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{mode === 'login' ? 'Welcome Back' : 'Create Account'}</DialogTitle>
+          <DialogTitle>{mode === 'login' ? 'Welcome' : 'Create Account'}</DialogTitle>
           <DialogDescription>
             {mode === 'login' 
               ? 'Sign in to track your digital detox progress' 
@@ -106,6 +106,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 type="submit" 
                 className="w-full bg-primary hover:bg-primary/90" 
                 disabled={isSubmitting}
+                style={{ backgroundColor: "#9b87f5" }}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
