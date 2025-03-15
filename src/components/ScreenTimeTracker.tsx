@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Load entries from Supabase when user logs in
   useEffect(() => {
     if (user) {
       fetchEntries();
@@ -43,7 +41,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     try {
       setIsLoading(true);
       
-      // Fetch screen time entries for the current user
       const { data, error } = await supabase
         .from('screen_time_entries')
         .select(`
@@ -58,7 +55,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       if (error) throw error;
       
       if (data) {
-        // Convert hours to minutes and format the data
         const formattedEntries: ScreenTimeEntry[] = data.map(entry => ({
           id: entry.id,
           date: entry.date,
@@ -89,19 +85,15 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     }
     
     try {
-      // Convert minutes to hours for storage
       const hours = minutes / 60;
       
-      // Check if there's an entry for this date
       const existingEntryIndex = screenTimeEntries.findIndex(
         entry => entry.date === selectedDate
       );
       
       if (existingEntryIndex !== -1) {
-        // Update existing entry
         const existingEntry = screenTimeEntries[existingEntryIndex];
         
-        // Update in Supabase
         const { error } = await supabase
           .from('screen_time_entries')
           .update({ hours })
@@ -110,7 +102,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         if (error) throw error;
         
         if (selectedImage) {
-          // Add screenshot
           const { error: screenshotError } = await supabase
             .from('screenshots')
             .insert({
@@ -121,7 +112,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           if (screenshotError) throw screenshotError;
         }
         
-        // Update local state
         const updatedEntries = [...screenTimeEntries];
         updatedEntries[existingEntryIndex] = {
           ...existingEntry,
@@ -131,7 +121,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         
         setScreenTimeEntries(updatedEntries);
       } else {
-        // Create new entry
         const { data, error } = await supabase
           .from('screen_time_entries')
           .insert({
@@ -145,7 +134,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         if (error) throw error;
         
         if (selectedImage && data.id) {
-          // Add screenshot
           const { error: screenshotError } = await supabase
             .from('screenshots')
             .insert({
@@ -156,7 +144,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           if (screenshotError) throw screenshotError;
         }
         
-        // Update local state
         const newEntry: ScreenTimeEntry = {
           id: data.id,
           date: selectedDate,
@@ -200,7 +187,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     if (!user) return;
     
     try {
-      // Delete from Supabase
       const { error } = await supabase
         .from('screen_time_entries')
         .delete()
@@ -208,7 +194,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         
       if (error) throw error;
       
-      // Update local state
       setScreenTimeEntries(screenTimeEntries.filter(entry => entry.id !== id));
       
       toast({
