@@ -52,11 +52,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{mode === 'login' ? 'Welcome' : 'Create Account'}</DialogTitle>
+          <DialogTitle>{mode === 'login' ? 'Welcome Back' : 'Welcome'}</DialogTitle>
           <DialogDescription>
             {mode === 'login' 
               ? 'Sign in to track your digital detox progress' 
-              : 'Join the digital detox challenge today'}
+              : 'Sign up to track your digital detox progress'}
           </DialogDescription>
         </DialogHeader>
         
