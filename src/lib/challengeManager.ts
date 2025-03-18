@@ -17,13 +17,45 @@ export const calculateProgressPercentage = (entriesCount: number): number => {
 };
 
 // Get the current challenge progress from localStorage
-export const getChallengeProgress = (): number => {
-  return parseInt(localStorage.getItem('challengeProgress') || '0');
+export const getChallengeProgress = (): { completed: number; active: number; pointsEarned: number } => {
+  // Try to get the saved challenge progress data
+  const savedProgressData = localStorage.getItem('challengeProgressData');
+  
+  if (savedProgressData) {
+    try {
+      return JSON.parse(savedProgressData);
+    } catch (e) {
+      console.error('Error parsing challenge progress data:', e);
+    }
+  }
+  
+  // Return default values if no data exists or there was an error parsing
+  return {
+    completed: 0,
+    active: 1,
+    pointsEarned: 0
+  };
 };
 
-// Save challenge progress to localStorage
+// Save challenge progress data to localStorage
+export const saveChallengeProgressData = (data: { completed: number; active: number; pointsEarned: number }): void => {
+  localStorage.setItem('challengeProgressData', JSON.stringify(data));
+};
+
+// Save simple challenge progress percentage to localStorage (for backward compatibility)
 export const saveChallengeProgress = (progress: number): void => {
   localStorage.setItem('challengeProgress', progress.toString());
+  
+  // Also update the progress data if needed
+  const progressData = getChallengeProgress();
+  if (progress === 100 && progressData.completed === 0) {
+    // When a challenge is completed, update the completed count and points
+    saveChallengeProgressData({
+      ...progressData,
+      completed: progressData.completed + 1,
+      pointsEarned: progressData.pointsEarned + 1000
+    });
+  }
 };
 
 // Get entries count from Supabase or localStorage
@@ -111,6 +143,13 @@ export const isChallengeStarted = (): boolean => {
 export const startChallenge = (): void => {
   localStorage.setItem('challengeStarted', 'true');
   localStorage.setItem('challengeProgress', '0');
+  
+  // Initialize the challenge progress data
+  saveChallengeProgressData({
+    completed: 0,
+    active: 1,
+    pointsEarned: 0
+  });
 };
 
 // Calculate remaining screenshots needed for reward
