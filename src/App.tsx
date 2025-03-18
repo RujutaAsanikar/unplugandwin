@@ -9,6 +9,7 @@ import { AuthProvider } from "@/lib/auth";
 import Index from "./pages/Index";
 import ChallengePage from "./pages/ChallengePage";
 import AdminPage from "./pages/AdminPage";
+import RewardsPage from "./pages/RewardsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/challenges" element={<ChallengePage />} />
+              <Route path="/rewards" element={<RewardsPage />} />
               <Route path="/admin" element={<AdminPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
