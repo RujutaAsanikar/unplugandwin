@@ -1,39 +1,64 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Reward } from '@/lib/types';
 import { motion } from 'framer-motion';
-import { Star, Lock, Check } from 'lucide-react';
+import { Star, Lock, Check, Trophy } from 'lucide-react';
+import { getUserPoints } from '@/lib/pointsManager';
+import { Progress } from '@/components/ui/progress';
+import { getChallengeProgress } from '@/lib/challengeManager';
 
 const Rewards: React.FC = () => {
+  const [points, setPoints] = useState(getUserPoints());
+  const [challengeProgress, setChallengeProgress] = useState(getChallengeProgress());
+  
+  // Update points and challenge progress whenever component is mounted
+  useEffect(() => {
+    // Get latest points and challenge progress
+    setPoints(getUserPoints());
+    setChallengeProgress(getChallengeProgress());
+    
+    // Set up interval to refresh points and progress periodically
+    const interval = setInterval(() => {
+      setPoints(getUserPoints());
+      setChallengeProgress(getChallengeProgress());
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
+
   // Sample rewards
   const rewards: Reward[] = [
     {
       id: '1',
       title: 'Digital Minimalist',
       description: 'Reduce weekly screen time by 10%',
-      unlocked: true,
-      icon: '✨'
+      unlocked: points.current >= 5000,
+      icon: '✨',
+      requiredScreenshots: 5
     },
     {
       id: '2',
       title: 'Focus Champion',
       description: 'Complete 3 daily challenges in a row',
-      unlocked: false,
-      icon: '🏆'
+      unlocked: points.current >= 10000,
+      icon: '🏆',
+      requiredScreenshots: 10
     },
     {
       id: '3',
       title: 'Consistency Master',
       description: 'Log screen time for 7 consecutive days',
-      unlocked: false,
-      icon: '📊'
+      unlocked: points.current >= 20000,
+      icon: '📊',
+      requiredScreenshots: 20
     },
     {
       id: '4',
       title: 'Digital Detox Pro',
       description: 'Reduce screen time by 25% for a full week',
-      unlocked: false,
-      icon: '🌿'
+      unlocked: points.current >= 30000,
+      icon: '🌿',
+      requiredScreenshots: 30
     }
   ];
 
@@ -61,6 +86,9 @@ const Rewards: React.FC = () => {
     }
   };
 
+  // Calculate percentage of total points
+  const pointsPercentage = Math.min(100, Math.round((points.current / points.target) * 100));
+
   return (
     <div className="mt-8 mb-16">
       <motion.div 
@@ -70,8 +98,24 @@ const Rewards: React.FC = () => {
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <h2 className="text-2xl font-medium mb-2">Rewards</h2>
-          <p className="text-muted-foreground">Earn rewards as you develop healthier screen habits.</p>
+          <h2 className="text-2xl font-medium mb-6">Rewards</h2>
+
+          {/* Points Progress Display */}
+          <div className="mb-8 p-5 glassmorphism rounded-xl border border-primary/20 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-medium text-lg">Progress</h3>
+              <div className="text-right font-medium text-lg">{pointsPercentage}%</div>
+            </div>
+            
+            <Progress value={pointsPercentage} className="h-3 mb-4" />
+            
+            <div className="flex items-center gap-2 justify-center mt-4 bg-primary/10 px-4 py-3 rounded-full">
+              <Trophy className="h-5 w-5 text-primary" />
+              <span className="font-medium text-primary">
+                {points.current.toLocaleString()} / {points.target.toLocaleString()} pts
+              </span>
+            </div>
+          </div>
         </motion.div>
         
         <motion.div 
@@ -102,9 +146,13 @@ const Rewards: React.FC = () => {
               <h3 className="font-medium mb-1">{reward.title}</h3>
               <p className="text-sm text-muted-foreground">{reward.description}</p>
               
-              {reward.unlocked && (
+              {reward.unlocked ? (
                 <div className="mt-3 inline-flex items-center text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
                   <Check className="w-3 h-3 mr-1" /> Unlocked
+                </div>
+              ) : (
+                <div className="mt-3 inline-flex items-center text-xs text-muted-foreground bg-gray-100 px-2 py-1 rounded-full">
+                  <span>{reward.requiredScreenshots} screenshots needed</span>
                 </div>
               )}
             </motion.div>

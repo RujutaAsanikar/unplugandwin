@@ -1,14 +1,34 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { UserPoints } from '@/lib/types';
+import { getUserPoints } from '@/lib/pointsManager';
 
 interface PointsDisplayProps {
-  points: UserPoints;
+  points?: UserPoints;
+  refreshInterval?: number;
 }
 
-const PointsDisplay: React.FC<PointsDisplayProps> = ({ points }) => {
+const PointsDisplay: React.FC<PointsDisplayProps> = ({ 
+  points: propsPoints, 
+  refreshInterval = 5000
+}) => {
+  const [points, setPoints] = useState<UserPoints>(propsPoints || getUserPoints());
+
+  useEffect(() => {
+    if (propsPoints) {
+      setPoints(propsPoints);
+    } else {
+      setPoints(getUserPoints());
+      
+      const interval = setInterval(() => {
+        setPoints(getUserPoints());
+      }, refreshInterval);
+      
+      return () => clearInterval(interval);
+    }
+  }, [propsPoints, refreshInterval]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
