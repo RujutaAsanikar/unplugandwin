@@ -29,6 +29,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   // Update mode when defaultMode prop changes
   useEffect(() => {
     setMode(defaultMode);
+    console.log("Mode updated to:", defaultMode);
   }, [defaultMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
