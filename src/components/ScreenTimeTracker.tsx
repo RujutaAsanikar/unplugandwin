@@ -279,7 +279,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         {!user && (
           <div className="text-center p-4 bg-primary/5 rounded-lg mb-4">
             <AlertCircle className="mx-auto h-6 w-6 text-primary mb-2" />
-            <p className="text-sm font-medium mb-2">Sign in to track your screen time</p>
+            <p className="text-sm font-medium mb-2">Track your screen time</p>
             <Button 
               onClick={() => setAuthModalOpen(true)}
               className="bg-primary hover:bg-primary/90"

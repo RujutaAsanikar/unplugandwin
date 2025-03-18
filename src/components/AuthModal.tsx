@@ -54,9 +54,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
         <DialogHeader>
           <DialogTitle>{mode === 'login' ? 'Welcome Back' : 'Welcome'}</DialogTitle>
           <DialogDescription>
-            {mode === 'login' 
-              ? 'Sign in to track your digital detox progress' 
-              : 'Sign up to track your digital detox progress'}
+            {mode === 'login' ? 'Sign in to continue' : 'Sign up to track your digital detox progress'}
           </DialogDescription>
         </DialogHeader>
         
