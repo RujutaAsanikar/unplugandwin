@@ -8,7 +8,11 @@ import { getChallengeProgress } from '@/lib/challengeManager';
 
 const Rewards: React.FC = () => {
   const [points, setPoints] = useState(getUserPoints());
-  const [challengeProgress, setChallengeProgress] = useState(getChallengeProgress());
+  const [challengeProgress, setChallengeProgress] = useState<{
+    completed: number;
+    active: number;
+    pointsEarned: number;
+  }>(getChallengeProgress());
   
   // Update points and challenge progress whenever component is mounted
   useEffect(() => {
