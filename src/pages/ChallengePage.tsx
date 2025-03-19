@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Trophy, CheckCircle, Upload, Shield } from 'lucide-react';
+import { Clock, Trophy, CheckCircle, Upload, Shield, ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { 
   getChallengeProgress, 
@@ -28,6 +27,7 @@ const ChallengePage = () => {
   const [completedRecently, setCompletedRecently] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const savedChallengeStarted = isChallengeStarted();
@@ -43,7 +43,6 @@ const ChallengePage = () => {
   }, [user]);
 
   useEffect(() => {
-    // Check if challenge was just completed
     if (challengeProgress === 100 && !completedRecently) {
       setCompletedRecently(true);
       setShowConfetti(true);
@@ -122,6 +121,18 @@ const ChallengePage = () => {
     >
       <Header activeTab="Challenges" />
       <main className="container max-w-4xl mx-auto py-8 pb-20 px-4">
+        <div className="flex items-center mb-6">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate('/')}
+            className="mr-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-3xl font-bold">30-Day Challenge</h1>
+        </div>
+        
         {isAdmin && (
           <div className="mb-6">
             <Button asChild variant="outline" className="gap-2">
@@ -139,11 +150,6 @@ const ChallengePage = () => {
           initial="hidden"
           animate="visible"
         >
-          <motion.div variants={itemVariants}>
-            <h1 className="text-3xl font-bold mb-2">30-Day Challenge</h1>
-            <p className="text-muted-foreground">Reduce your social media usage and earn up to 30,000 points!</p>
-          </motion.div>
-          
           {!challengeStarted ? (
             <motion.div 
               variants={itemVariants}
