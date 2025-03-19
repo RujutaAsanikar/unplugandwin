@@ -1,10 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy } from 'lucide-react';
+import { Trophy, ArrowLeft } from 'lucide-react';
 import { getUserPoints } from '@/lib/pointsManager';
 import { Progress } from '@/components/ui/progress';
 import { getChallengeProgress } from '@/lib/challengeManager';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const Rewards: React.FC = () => {
   const [points, setPoints] = useState(getUserPoints());
@@ -66,7 +68,19 @@ const Rewards: React.FC = () => {
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <h2 className="text-2xl font-medium mb-6">Your Progress</h2>
+          <div className="flex items-center mb-6">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              asChild
+              className="mr-2"
+            >
+              <Link to="/">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+            <h2 className="text-2xl font-medium">Your Progress</h2>
+          </div>
 
           {/* Points Progress Display */}
           <div className="mb-8 p-5 glassmorphism rounded-xl border border-primary/20 shadow-sm">
@@ -87,24 +101,6 @@ const Rewards: React.FC = () => {
               
               <div className="text-center text-muted-foreground">
                 <span className="font-medium text-primary">{pointsLeft.toLocaleString()}</span> points left to reach your target
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-5 glassmorphism rounded-xl border border-primary/20 shadow-sm">
-            <h3 className="font-medium text-lg mb-4">Challenge Stats</h3>
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Completed Challenges</span>
-                <span className="font-medium">{challengeProgress.completed}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Active Challenges</span>
-                <span className="font-medium">{challengeProgress.active}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Points Earned</span>
-                <span className="font-medium">{challengeProgress.pointsEarned.toLocaleString()} pts</span>
               </div>
             </div>
           </div>
