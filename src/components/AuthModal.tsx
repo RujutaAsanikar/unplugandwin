@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,8 +24,16 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
+
+  // Close modal if user is logged in
+  useEffect(() => {
+    if (user) {
+      onClose();
+    }
+  }, [user, onClose]);
 
   // Update mode when defaultMode prop changes
   useEffect(() => {
@@ -32,17 +41,52 @@ const AuthModal: React.FC<AuthModalProps> = ({
     console.log("Mode updated to:", defaultMode);
   }, [defaultMode]);
 
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!validatePassword(password)) {
+      toast({
+        title: "Invalid password",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
       if (mode === 'login') {
-        await signIn(email, password);
+        const { error } = await signIn(email, password);
+        if (!error) {
+          setEmail('');
+          setPassword('');
+        }
       } else {
-        await signUp(email, password);
+        const { error } = await signUp(email, password);
+        if (!error) {
+          setEmail('');
+          setPassword('');
+        }
       }
-      onClose();
     } catch (error) {
       console.error('Authentication error:', error);
     } finally {
@@ -93,6 +137,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 className="pl-10"
                 placeholder="••••••••"
                 required
+                minLength={6}
               />
             </div>
           </div>
@@ -114,7 +159,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     {mode === 'login' ? 'Signing in...' : 'Creating account...'}
                   </span>
                 ) : (
