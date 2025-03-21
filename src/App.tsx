@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import ChallengePage from "./pages/ChallengePage";
 import AdminPage from "./pages/AdminPage";
 import RewardsPage from "./pages/RewardsPage";
+import HomePage from "./pages/HomePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <AnimatePresence mode="wait">
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/challenges" element={<ChallengePage />} />
               <Route path="/rewards" element={<RewardsPage />} />
               <Route path="/admin" element={<AdminPage />} />

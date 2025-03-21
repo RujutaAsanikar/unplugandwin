@@ -2,17 +2,18 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, DollarSign, BarChart3, Home, Shield } from 'lucide-react';
+import { Trophy, DollarSign, BarChart3, Home, Shield, Info } from 'lucide-react';
 import AuthButton from './AuthButton';
 
 interface HeaderProps {
-  activeTab: 'Dashboard' | 'Challenges' | 'Rewards' | 'Admin';
+  activeTab: 'Home' | 'Dashboard' | 'Challenges' | 'Rewards' | 'Admin';
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab }) => {
   const location = useLocation();
   
   const headerLinks = [
+    { name: 'Home', path: '/home', icon: Info },
     { name: 'Dashboard', path: '/', icon: Home },
     { name: 'Challenges', path: '/challenges', icon: Trophy },
     { name: 'Rewards', path: '/rewards', icon: DollarSign },
@@ -89,7 +90,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
                   {isActive && (
                     <motion.div
                       layoutId="activeTabMobile"
-                      className="absolute bottom-0 h-0.5 w-1/3 bg-primary"
+                      className="absolute bottom-0 h-0.5 w-1/4 bg-primary"
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2 }}
                     />
