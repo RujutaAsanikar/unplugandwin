@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -309,7 +310,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                 {sortedEntries.map((entry) => (
                   <motion.div
                     key={entry.id}
-                    className="overflow-hidden rounded-lg border border-gray-100 shadow-sm"
+                    className="overflow-hidden rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200"
                     layout
                   >
                     <div className="relative aspect-video bg-gray-50">
@@ -317,7 +318,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                         <img
                           src={entry.screenshotUrl}
                           alt={`Screenshot from ${entry.date}`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain bg-gray-50"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
