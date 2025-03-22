@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import SurveyForm from '@/components/SurveyForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 const SurveyPage = () => {
   return (
@@ -18,7 +18,7 @@ const SurveyPage = () => {
         className="container mx-auto max-w-4xl px-4 py-8"
       >
         <Alert className="mb-6 bg-primary/10 border-primary/20">
-          <InfoCircle className="h-4 w-4 mr-2" />
+          <Info className="h-4 w-4 mr-2" />
           <AlertDescription>
             All questions in this survey are mandatory. Please answer all questions to proceed.
           </AlertDescription>
