@@ -93,6 +93,8 @@ export type Database = {
           device_access: string | null
           id: string
           name: string | null
+          parent_phone: string | null
+          personal_phone: string | null
           preferred_rewards: string[] | null
           relationship_to_child: string | null
           screen_time_concern: boolean | null
@@ -108,6 +110,8 @@ export type Database = {
           device_access?: string | null
           id?: string
           name?: string | null
+          parent_phone?: string | null
+          personal_phone?: string | null
           preferred_rewards?: string[] | null
           relationship_to_child?: string | null
           screen_time_concern?: boolean | null
@@ -123,6 +127,8 @@ export type Database = {
           device_access?: string | null
           id?: string
           name?: string | null
+          parent_phone?: string | null
+          personal_phone?: string | null
           preferred_rewards?: string[] | null
           relationship_to_child?: string | null
           screen_time_concern?: boolean | null

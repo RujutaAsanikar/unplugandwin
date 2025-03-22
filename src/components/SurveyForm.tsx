@@ -32,6 +32,8 @@ type SurveyFormData = {
   screenTimeConcern: boolean;
   areasOfConcern: string[];
   preferredRewards: string[];
+  personalPhone: string;
+  parentPhone: string;
 };
 
 const SurveyForm: React.FC = () => {
@@ -55,6 +57,8 @@ const SurveyForm: React.FC = () => {
       screenTimeConcern: false,
       areasOfConcern: [],
       preferredRewards: [],
+      personalPhone: '',
+      parentPhone: '',
     }
   });
 
@@ -99,6 +103,8 @@ const SurveyForm: React.FC = () => {
         screen_time_concern: data.screenTimeConcern,
         areas_of_concern: data.areasOfConcern,
         preferred_rewards: data.preferredRewards,
+        personal_phone: data.personalPhone,
+        parent_phone: data.parentPhone,
         user_id: user?.id,
       };
       
@@ -207,14 +213,41 @@ const SurveyForm: React.FC = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="under18">Under 18</SelectItem>
-                      <SelectItem value="18-24">18-24</SelectItem>
-                      <SelectItem value="25-34">25-34</SelectItem>
-                      <SelectItem value="35-44">35-44</SelectItem>
-                      <SelectItem value="45-54">45-54</SelectItem>
-                      <SelectItem value="55+">55+</SelectItem>
+                      <SelectItem value="under13">Under 13</SelectItem>
+                      <SelectItem value="13-15">13-15</SelectItem>
+                      <SelectItem value="16-17">16-17</SelectItem>
+                      <SelectItem value="18-20">18-20</SelectItem>
+                      <SelectItem value="20-under">20 and under</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="personalPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Phone Number</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="Enter your phone number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="parentPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parent/Guardian Phone Number</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="Enter parent's phone number" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
