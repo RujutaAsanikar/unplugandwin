@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,18 +23,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import AuthModal from './AuthModal';
 
-type SurveyFormData = {
-  name: string;
-  age: string;
-  deviceAccess: string;
-  socialMediaPlatforms: string[];
-  dailyScreenTime: string;
-  screenTimeConcern: boolean;
-  areasOfConcern: string[];
-  preferredRewards: string[];
-  personalPhone: string;
-  parentPhone: string;
-};
+// Define schema for form validation
+const formSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  age: z.string().min(1, { message: "Age is required" }),
+  deviceAccess: z.string().min(1, { message: "Device access information is required" }),
+  socialMediaPlatforms: z.array(z.string()).min(1, { message: "Please select at least one social media platform" }),
+  dailyScreenTime: z.string().min(1, { message: "Daily screen time information is required" }),
+  screenTimeConcern: z.boolean(),
+  areasOfConcern: z.array(z.string()).min(1, { message: "Please select at least one area of concern" }),
+  otherAreaOfConcern: z.string().optional(),
+  preferredRewards: z.array(z.string()).min(1, { message: "Please select at least one reward type" }),
+  customReward: z.string().optional(),
+  personalPhone: z.string().min(1, { message: "Your phone number is required" }),
+  parentPhone: z.string().min(1, { message: "Parent/guardian phone number is required" }),
+});
+
+type SurveyFormData = z.infer<typeof formSchema>;
 
 const SurveyForm: React.FC = () => {
   const navigate = useNavigate();
@@ -42,8 +49,11 @@ const SurveyForm: React.FC = () => {
   const [completed, setCompleted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
+  const [showOtherConcernInput, setShowOtherConcernInput] = useState(false);
+  const [showCustomRewardInput, setShowCustomRewardInput] = useState(false);
 
   const form = useForm<SurveyFormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       age: '',
@@ -52,7 +62,9 @@ const SurveyForm: React.FC = () => {
       dailyScreenTime: '',
       screenTimeConcern: false,
       areasOfConcern: [],
+      otherAreaOfConcern: '',
       preferredRewards: [],
+      customReward: '',
       personalPhone: '',
       parentPhone: '',
     }
@@ -76,14 +88,59 @@ const SurveyForm: React.FC = () => {
   ];
 
   const nextStep = () => {
-    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    const fieldsToValidate = currentStep === 1 
+      ? ['name', 'age', 'personalPhone', 'parentPhone']
+      : currentStep === 2
+      ? ['deviceAccess', 'socialMediaPlatforms', 'dailyScreenTime']
+      : ['areasOfConcern', 'preferredRewards'];
+
+    form.trigger(fieldsToValidate as any).then(isValid => {
+      if (isValid) {
+        setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+      } else {
+        toast({
+          title: "Required fields missing",
+          description: "Please fill in all required fields to proceed.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const prevStep = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // Watch for areas of concern to show/hide "Other" input field
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'areasOfConcern' || name === 'preferredRewards' || !name) {
+        setShowOtherConcernInput(value.areasOfConcern?.includes('Other') || false);
+        setShowCustomRewardInput(value.preferredRewards?.includes('Custom rewards (specify in comments)') || false);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
   const onSubmit = async (data: SurveyFormData) => {
+    // Check if other concern is required but not provided
+    if (data.areasOfConcern.includes('Other') && !data.otherAreaOfConcern) {
+      form.setError('otherAreaOfConcern', {
+        type: 'manual',
+        message: 'Please specify your other area of concern'
+      });
+      return;
+    }
+
+    // Check if custom reward is required but not provided
+    if (data.preferredRewards.includes('Custom rewards (specify in comments)') && !data.customReward) {
+      form.setError('customReward', {
+        type: 'manual',
+        message: 'Please specify your custom reward'
+      });
+      return;
+    }
+
     setSubmitting(true);
     
     try {
@@ -96,7 +153,9 @@ const SurveyForm: React.FC = () => {
         daily_screen_time: data.dailyScreenTime,
         screen_time_concern: data.screenTimeConcern,
         areas_of_concern: data.areasOfConcern,
+        other_area_of_concern: data.otherAreaOfConcern,
         preferred_rewards: data.preferredRewards,
+        custom_reward: data.customReward,
         personal_phone: data.personalPhone,
         parent_phone: data.parentPhone,
         user_id: user?.id,
@@ -182,7 +241,7 @@ const SurveyForm: React.FC = () => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Name</FormLabel>
+                  <FormLabel>Your Name <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input placeholder="Enter your name" {...field} />
                   </FormControl>
@@ -196,7 +255,7 @@ const SurveyForm: React.FC = () => {
               name="age"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Age</FormLabel>
+                  <FormLabel>Your Age <span className="text-destructive">*</span></FormLabel>
                   <Select 
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -224,7 +283,7 @@ const SurveyForm: React.FC = () => {
               name="personalPhone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Phone Number</FormLabel>
+                  <FormLabel>Your Phone Number <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input type="tel" placeholder="Enter your phone number" {...field} />
                   </FormControl>
@@ -238,7 +297,7 @@ const SurveyForm: React.FC = () => {
               name="parentPhone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Parent/Guardian Phone Number</FormLabel>
+                  <FormLabel>Parent/Guardian Phone Number <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input type="tel" placeholder="Enter parent's phone number" {...field} />
                   </FormControl>
@@ -257,7 +316,7 @@ const SurveyForm: React.FC = () => {
               name="deviceAccess"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>What devices do you have access to?</FormLabel>
+                  <FormLabel>What devices do you have access to? <span className="text-destructive">*</span></FormLabel>
                   <Select 
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -287,7 +346,7 @@ const SurveyForm: React.FC = () => {
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base">Which social media platforms do you use?</FormLabel>
+                    <FormLabel className="text-base">Which social media platforms do you use? <span className="text-destructive">*</span></FormLabel>
                     <FormDescription>
                       Select all that apply
                     </FormDescription>
@@ -337,7 +396,7 @@ const SurveyForm: React.FC = () => {
               name="dailyScreenTime"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>How much time do you spend on screens daily?</FormLabel>
+                  <FormLabel>How much time do you spend on screens daily? <span className="text-destructive">*</span></FormLabel>
                   <Select 
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -391,7 +450,7 @@ const SurveyForm: React.FC = () => {
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base">What areas are you most concerned about?</FormLabel>
+                    <FormLabel className="text-base">What areas are you most concerned about? <span className="text-destructive">*</span></FormLabel>
                     <FormDescription>
                       Select all that apply
                     </FormDescription>
@@ -436,13 +495,29 @@ const SurveyForm: React.FC = () => {
               )}
             />
             
+            {showOtherConcernInput && (
+              <FormField
+                control={form.control}
+                name="otherAreaOfConcern"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Please specify your other area of concern <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Enter your other area of concern" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            
             <FormField
               control={form.control}
               name="preferredRewards"
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base">What types of rewards would motivate you?</FormLabel>
+                    <FormLabel className="text-base">What types of rewards would motivate you? <span className="text-destructive">*</span></FormLabel>
                     <FormDescription>
                       Select all that apply
                     </FormDescription>
@@ -486,6 +561,22 @@ const SurveyForm: React.FC = () => {
                 </FormItem>
               )}
             />
+            
+            {showCustomRewardInput && (
+              <FormField
+                control={form.control}
+                name="customReward"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Please specify your custom reward <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Enter your custom reward details" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
         );
         
