@@ -83,6 +83,54 @@ export type Database = {
           },
         ]
       }
+      user_surveys: {
+        Row: {
+          age: string | null
+          areas_of_concern: string[] | null
+          child_age: string | null
+          created_at: string | null
+          daily_screen_time: string | null
+          device_access: string | null
+          id: string
+          name: string | null
+          preferred_rewards: string[] | null
+          relationship_to_child: string | null
+          screen_time_concern: boolean | null
+          social_media_platforms: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          age?: string | null
+          areas_of_concern?: string[] | null
+          child_age?: string | null
+          created_at?: string | null
+          daily_screen_time?: string | null
+          device_access?: string | null
+          id?: string
+          name?: string | null
+          preferred_rewards?: string[] | null
+          relationship_to_child?: string | null
+          screen_time_concern?: boolean | null
+          social_media_platforms?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          age?: string | null
+          areas_of_concern?: string[] | null
+          child_age?: string | null
+          created_at?: string | null
+          daily_screen_time?: string | null
+          device_access?: string | null
+          id?: string
+          name?: string | null
+          preferred_rewards?: string[] | null
+          relationship_to_child?: string | null
+          screen_time_concern?: boolean | null
+          social_media_platforms?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

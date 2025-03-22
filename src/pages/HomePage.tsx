@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -44,7 +43,7 @@ const HomePage = () => {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary/90 shadow-lg">
-                  <Link to="/" className="flex items-center">
+                  <Link to="/survey" className="flex items-center">
                     Get Started <ArrowRight className="ml-2" />
                   </Link>
                 </Button>
@@ -469,3 +468,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
