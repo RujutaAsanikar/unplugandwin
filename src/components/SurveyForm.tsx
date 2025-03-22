@@ -24,8 +24,6 @@ import AuthModal from './AuthModal';
 type SurveyFormData = {
   name: string;
   age: string;
-  relationshipToChild: string;
-  childAge: string;
   deviceAccess: string;
   socialMediaPlatforms: string[];
   dailyScreenTime: string;
@@ -49,8 +47,6 @@ const SurveyForm: React.FC = () => {
     defaultValues: {
       name: '',
       age: '',
-      relationshipToChild: '',
-      childAge: '',
       deviceAccess: '',
       socialMediaPlatforms: [],
       dailyScreenTime: '',
@@ -95,8 +91,6 @@ const SurveyForm: React.FC = () => {
       const surveyData = {
         name: data.name,
         age: data.age,
-        relationship_to_child: data.relationshipToChild,
-        child_age: data.childAge,
         device_access: data.deviceAccess,
         social_media_platforms: data.socialMediaPlatforms,
         daily_screen_time: data.dailyScreenTime,
@@ -252,64 +246,6 @@ const SurveyForm: React.FC = () => {
                 </FormItem>
               )}
             />
-            
-            <FormField
-              control={form.control}
-              name="relationshipToChild"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Your Relationship to the Child</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your relationship" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="parent">Parent</SelectItem>
-                      <SelectItem value="guardian">Guardian</SelectItem>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                      <SelectItem value="relative">Other Relative</SelectItem>
-                      <SelectItem value="self">Self (I am the child)</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="childAge"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Child's Age</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select child's age range" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="under6">Under 6</SelectItem>
-                      <SelectItem value="6-9">6-9</SelectItem>
-                      <SelectItem value="10-12">10-12</SelectItem>
-                      <SelectItem value="13-15">13-15</SelectItem>
-                      <SelectItem value="16-18">16-18</SelectItem>
-                      <SelectItem value="18+">18+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
         );
         
@@ -321,7 +257,7 @@ const SurveyForm: React.FC = () => {
               name="deviceAccess"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>What devices does the child have access to?</FormLabel>
+                  <FormLabel>What devices do you have access to?</FormLabel>
                   <Select 
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -351,7 +287,7 @@ const SurveyForm: React.FC = () => {
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base">Which social media platforms does the child use?</FormLabel>
+                    <FormLabel className="text-base">Which social media platforms do you use?</FormLabel>
                     <FormDescription>
                       Select all that apply
                     </FormDescription>
@@ -401,7 +337,7 @@ const SurveyForm: React.FC = () => {
               name="dailyScreenTime"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>How much time does the child spend on screens daily?</FormLabel>
+                  <FormLabel>How much time do you spend on screens daily?</FormLabel>
                   <Select 
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -437,7 +373,7 @@ const SurveyForm: React.FC = () => {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Are you concerned about the child's screen time?
+                      Are you concerned about your screen time?
                     </FormLabel>
                   </div>
                 </FormItem>
@@ -506,7 +442,7 @@ const SurveyForm: React.FC = () => {
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base">What types of rewards would motivate the child?</FormLabel>
+                    <FormLabel className="text-base">What types of rewards would motivate you?</FormLabel>
                     <FormDescription>
                       Select all that apply
                     </FormDescription>
