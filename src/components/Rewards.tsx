@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Upload } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { getUserPoints } from '@/lib/pointsManager';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -10,9 +10,7 @@ import {
   getEntriesCount,
   calculateProgressPercentage
 } from '@/lib/challengeManager';
-import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
 
 const Rewards: React.FC = () => {
   const [points, setPoints] = useState(getUserPoints());
@@ -107,17 +105,6 @@ const Rewards: React.FC = () => {
                 <span className="font-medium text-primary">{pointsLeft.toLocaleString()}</span> 
                 <span className="text-muted-foreground"> points left to reach your target</span>
               </div>
-              
-              {progressPercentage < 100 && (
-                <div className="text-center mt-2">
-                  <Button asChild variant="outline" className="gap-2">
-                    <Link to="/">
-                      <Upload className="h-4 w-4" />
-                      Upload Screenshots
-                    </Link>
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         </motion.div>
