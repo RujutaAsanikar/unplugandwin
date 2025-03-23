@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -56,7 +57,11 @@ const formSchema = z.object({
 
 type SurveyFormData = z.infer<typeof formSchema>;
 
-const SurveyForm: React.FC = () => {
+interface SurveyFormProps {
+  onComplete?: () => void;
+}
+
+const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
@@ -205,10 +210,22 @@ const SurveyForm: React.FC = () => {
         });
         
         setCompleted(true);
-        setTimeout(() => navigate('/'), 1500);
+        if (onComplete) {
+          onComplete();
+        }
       } else {
+        // Store the survey data in session storage for later submission
         sessionStorage.setItem('pendingSurveyData', JSON.stringify(surveyData));
-        setShowAuthModal(true);
+        
+        // First notify parent component that survey is completed
+        if (onComplete) {
+          onComplete();
+        }
+        
+        // Show auth modal after a brief delay
+        setTimeout(() => {
+          setShowAuthModal(true);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error submitting survey:', error);
@@ -239,12 +256,11 @@ const SurveyForm: React.FC = () => {
         if (error) throw error;
         
         toast({
-          title: "Survey completed!",
-          description: "Thank you for completing the survey.",
+          title: "Survey data saved!",
+          description: "Your survey responses have been recorded.",
         });
         
         sessionStorage.removeItem('pendingSurveyData');
-        setCompleted(true);
         setTimeout(() => navigate('/'), 1500);
       } catch (error) {
         console.error('Error saving survey after auth:', error);
@@ -613,16 +629,7 @@ const SurveyForm: React.FC = () => {
   };
 
   if (completed) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Thank You!</CardTitle>
-          <CardDescription>
-            Your survey has been submitted successfully. You will be redirected to the dashboard shortly.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    return null; // Let the parent component handle the completion view
   }
 
   return (
