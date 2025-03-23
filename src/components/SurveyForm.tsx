@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -26,15 +25,31 @@ import AuthModal from './AuthModal';
 // Define schema for form validation
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
-  age: z.string().min(1, { message: "Age is required" }),
+  age: z.string()
+    .refine(val => !isNaN(Number(val)), { message: "Age must be a number" })
+    .refine(val => Number(val) >= 5 && Number(val) <= 20, { message: "Age must be between 5 and 20" }),
   deviceAccess: z.string().min(1, { message: "Device access information is required" }),
   socialMediaPlatforms: z.array(z.string()).min(1, { message: "Please select at least one social media platform" }),
   dailyScreenTime: z.string().min(1, { message: "Daily screen time information is required" }),
   screenTimeConcern: z.boolean(),
   areasOfConcern: z.array(z.string()).min(1, { message: "Please select at least one area of concern" }),
-  otherAreaOfConcern: z.string().optional(),
+  otherAreaOfConcern: z.string().optional()
+    .refine(
+      (val) => {
+        // If "Other" is selected, otherAreaOfConcern should be specified
+        return true;
+      },
+      { message: "Please specify your other area of concern" }
+    ),
   preferredRewards: z.array(z.string()).min(1, { message: "Please select at least one reward type" }),
-  customReward: z.string().optional(),
+  customReward: z.string().optional()
+    .refine(
+      (val) => {
+        // If "Custom rewards" is selected, customReward should be specified
+        return true;
+      },
+      { message: "Please specify your custom reward" }
+    ),
   personalPhone: z.string().min(1, { message: "Your phone number is required" }),
   parentPhone: z.string().min(1, { message: "Parent/guardian phone number is required" }),
 });
@@ -96,6 +111,26 @@ const SurveyForm: React.FC = () => {
 
     form.trigger(fieldsToValidate as any).then(isValid => {
       if (isValid) {
+        if (currentStep === 3 && 
+            form.getValues().areasOfConcern.includes('Other') && 
+            !form.getValues().otherAreaOfConcern) {
+          form.setError('otherAreaOfConcern', {
+            type: 'manual',
+            message: 'Please specify your other area of concern'
+          });
+          return;
+        }
+        
+        if (currentStep === 3 && 
+            form.getValues().preferredRewards.includes('Custom rewards (specify in comments)') && 
+            !form.getValues().customReward) {
+          form.setError('customReward', {
+            type: 'manual',
+            message: 'Please specify your custom reward'
+          });
+          return;
+        }
+        
         setCurrentStep(prev => Math.min(prev + 1, totalSteps));
       } else {
         toast({
@@ -111,7 +146,6 @@ const SurveyForm: React.FC = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  // Watch for areas of concern to show/hide "Other" input field
   React.useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'areasOfConcern' || name === 'preferredRewards' || !name) {
@@ -123,7 +157,6 @@ const SurveyForm: React.FC = () => {
   }, [form.watch]);
 
   const onSubmit = async (data: SurveyFormData) => {
-    // Check if other concern is required but not provided
     if (data.areasOfConcern.includes('Other') && !data.otherAreaOfConcern) {
       form.setError('otherAreaOfConcern', {
         type: 'manual',
@@ -132,7 +165,6 @@ const SurveyForm: React.FC = () => {
       return;
     }
 
-    // Check if custom reward is required but not provided
     if (data.preferredRewards.includes('Custom rewards (specify in comments)') && !data.customReward) {
       form.setError('customReward', {
         type: 'manual',
@@ -144,7 +176,6 @@ const SurveyForm: React.FC = () => {
     setSubmitting(true);
     
     try {
-      // Transform the data to match the database schema
       const surveyData = {
         name: data.name,
         age: data.age,
@@ -162,7 +193,6 @@ const SurveyForm: React.FC = () => {
       };
       
       if (user) {
-        // If user is already logged in, save the survey data
         const { error } = await supabase
           .from('user_surveys')
           .insert(surveyData);
@@ -177,7 +207,6 @@ const SurveyForm: React.FC = () => {
         setCompleted(true);
         setTimeout(() => navigate('/'), 1500);
       } else {
-        // If user is not logged in, store the data in session storage and open auth modal
         sessionStorage.setItem('pendingSurveyData', JSON.stringify(surveyData));
         setShowAuthModal(true);
       }
@@ -196,7 +225,6 @@ const SurveyForm: React.FC = () => {
   const handleAuthModalClose = async () => {
     setShowAuthModal(false);
     
-    // Check if user is now logged in and there's pending survey data
     const pendingSurveyData = sessionStorage.getItem('pendingSurveyData');
     
     if (user && pendingSurveyData) {
@@ -215,7 +243,6 @@ const SurveyForm: React.FC = () => {
           description: "Thank you for completing the survey.",
         });
         
-        // Clear the pending data
         sessionStorage.removeItem('pendingSurveyData');
         setCompleted(true);
         setTimeout(() => navigate('/'), 1500);
@@ -230,7 +257,6 @@ const SurveyForm: React.FC = () => {
     }
   };
 
-  // Render different sections based on current step
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -256,23 +282,24 @@ const SurveyForm: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Your Age <span className="text-destructive">*</span></FormLabel>
-                  <Select 
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your age range" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="under13">Under 13</SelectItem>
-                      <SelectItem value="13-15">13-15</SelectItem>
-                      <SelectItem value="16-17">16-17</SelectItem>
-                      <SelectItem value="18-20">18-20</SelectItem>
-                      <SelectItem value="20-under">20 and under</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min={5}
+                      max={20}
+                      placeholder="Enter your age (5-20)"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || (Number(value) >= 5 && Number(value) <= 20)) {
+                          field.onChange(value);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Please enter your age between 5 and 20 years.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
