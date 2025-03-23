@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy } from 'lucide-react';
+import { Trophy, Upload } from 'lucide-react';
 import { getUserPoints } from '@/lib/pointsManager';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -12,6 +11,7 @@ import {
 } from '@/lib/challengeManager';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
 
 const Rewards: React.FC = () => {
   const [points, setPoints] = useState(getUserPoints());
@@ -24,36 +24,29 @@ const Rewards: React.FC = () => {
   const [entriesCount, setEntriesCount] = useState(0);
   const { user } = useAuth();
   
-  // Update points, challenge progress, and screenshot-based progress whenever component is mounted
   useEffect(() => {
     const fetchData = async () => {
-      // Get latest points and challenge progress
       setPoints(getUserPoints());
       setChallengeProgress(getChallengeProgress());
       
-      // Get the entries count to calculate the actual progress percentage
       const count = await getEntriesCount(user?.id);
       setEntriesCount(count);
       
-      // Calculate the progress percentage based on entries count
       const progress = calculateProgressPercentage(count);
       setProgressPercentage(progress);
       
-      // Update challenge progress in backend/localStorage
       await updateChallengeProgress(user?.id);
     };
     
     fetchData();
     
-    // Set up interval to refresh data periodically
     const interval = setInterval(() => {
       fetchData();
-    }, 5000); // Check every 5 seconds
+    }, 5000);
     
     return () => clearInterval(interval);
   }, [user?.id]);
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -77,11 +70,9 @@ const Rewards: React.FC = () => {
     }
   };
 
-  // Calculate percentage of total points
   const pointsPercentage = Math.min(100, Math.round((points.current / points.target) * 100));
   const pointsLeft = points.target - points.current;
   
-  // Calculate remaining screenshots
   const remainingScreenshots = Math.max(0, 30 - entriesCount);
 
   return (
@@ -97,7 +88,6 @@ const Rewards: React.FC = () => {
             <h2 className="text-2xl font-medium">Your Progress</h2>
           </div>
 
-          {/* Points Progress Display */}
           <div className="mb-8 p-5 glassmorphism rounded-xl border border-primary/20 shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-medium text-lg">Points Progress</h3>
@@ -121,7 +111,6 @@ const Rewards: React.FC = () => {
             </div>
           </div>
           
-          {/* Challenge Progress Display */}
           <div className="mb-8 p-5 glassmorphism rounded-xl border border-primary/20 shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-medium text-lg">Challenge Progress</h3>
