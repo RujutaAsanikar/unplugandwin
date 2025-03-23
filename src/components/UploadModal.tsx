@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, Upload, Image, X } from 'lucide-react';
+import { Calendar, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -121,7 +121,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (event) => {
-        const img = new Image();
+        const img = document.createElement('img');
         img.src = event.target?.result as string;
         img.onload = () => {
           // Create a canvas element
@@ -241,7 +241,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
                   onDrop={handleFileDrop}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Image className="h-10 w-10 text-muted-foreground mb-2" />
+                  <ImageIcon className="h-10 w-10 text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground mb-2">Drag and drop your screenshot or click to browse</p>
                   <p className="text-xs text-muted-foreground">Supports PNG, JPG, GIF</p>
                   <input
