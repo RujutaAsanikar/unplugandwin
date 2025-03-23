@@ -2,13 +2,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Clock, Upload, Smartphone, AlertCircle, ImageOff } from 'lucide-react';
+import { Clock, Upload, Image, X, AlertCircle, ImageOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
 import TimeInputModal from './TimeInputModal';
 import { useToast } from '@/components/ui/use-toast';
-import { updateChallengeProgress } from '@/lib/challengeManager';
+import { updateChallengeProgress, getPointsFromProgress } from '@/lib/challengeManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -174,10 +174,15 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         
         setScreenTimeEntries([newEntry, ...screenTimeEntries]);
         
-        const updatedProgress = updateChallengeProgress();
+        // Update the challenge progress based on the new entry
+        const updatedProgress = await updateChallengeProgress(user.id);
         
+        // Get the points from the progress
+        const earnedPoints = await getPointsFromProgress(user.id);
+        
+        // Notify parent component about earned points
         if (onPointsEarned) {
-          onPointsEarned(1000);
+          onPointsEarned(earnedPoints);
         }
       }
 

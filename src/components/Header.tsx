@@ -68,7 +68,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
       
       <div className="md:hidden border-t border-gray-100">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between">
+          <div className="flex justify-between py-2">
             {headerLinks.map((link) => {
               const isActive = activeTab === link.name;
               const Icon = link.icon;
@@ -77,7 +77,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
                 <Link 
                   key={link.name}
                   to={link.path}
-                  className={`flex flex-1 flex-col items-center py-3 ${
+                  className={`flex flex-1 flex-col items-center py-2 ${
                     isActive 
                       ? 'text-primary font-medium' 
                       : 'text-gray-600'

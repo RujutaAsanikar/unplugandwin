@@ -90,7 +90,7 @@ export const isJustCompleted = (previousProgress: number, newProgress: number): 
 // Update challenge progress based on screenshot count
 export const updateChallengeProgress = async (userId?: string): Promise<number> => {
   // Get previous progress
-  const previousProgress = getChallengeProgress();
+  const previousProgress = Number(localStorage.getItem('challengeProgress') || '0');
   
   // Get number of entries
   const entriesCount = await getEntriesCount(userId);
@@ -100,6 +100,20 @@ export const updateChallengeProgress = async (userId?: string): Promise<number> 
   
   // Save the updated progress
   saveChallengeProgress(newProgress);
+  
+  // Update points based on progress (1000 points per screenshot)
+  if (entriesCount > 0) {
+    // Update points - 1000 points per screenshot
+    const currentPoints = JSON.parse(localStorage.getItem('userPoints') || '{"current":0,"target":30000}');
+    const newPoints = Math.min(entriesCount * 1000, 30000);
+    
+    if (currentPoints.current !== newPoints) {
+      localStorage.setItem('userPoints', JSON.stringify({
+        ...currentPoints,
+        current: newPoints
+      }));
+    }
+  }
   
   // If challenge is completed (100%), record it in admin tracking
   if (newProgress === 100 && userId) {
@@ -156,4 +170,10 @@ export const startChallenge = (): void => {
 export const getRemainingScreenshots = async (userId?: string): Promise<number> => {
   const entriesCount = await getEntriesCount(userId);
   return Math.max(0, 30 - entriesCount);
+};
+
+// Calculate points earned from challenge progress
+export const getPointsFromProgress = async (userId?: string): Promise<number> => {
+  const entriesCount = await getEntriesCount(userId);
+  return Math.min(entriesCount * 1000, 30000);
 };

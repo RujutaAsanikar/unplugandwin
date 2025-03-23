@@ -9,7 +9,7 @@ import { Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
-import { isChallengeStarted, startChallenge } from '@/lib/challengeManager';
+import { isChallengeStarted, startChallenge, updateChallengeProgress } from '@/lib/challengeManager';
 
 const Index = () => {
   const [points, setPoints] = useState(getUserPoints());
@@ -20,6 +20,12 @@ const Index = () => {
   useEffect(() => {
     const savedChallengeStarted = isChallengeStarted();
     setChallengeStarted(savedChallengeStarted);
+    
+    if (savedChallengeStarted) {
+      // If challenge is already started, update the progress
+      updateChallengeProgress();
+    }
+    
     setPoints(getUserPoints());
   }, []);
 
@@ -27,10 +33,10 @@ const Index = () => {
     saveUserPoints(points);
   }, [points]);
 
-  const handlePointsEarned = (earned: number) => {
+  const handlePointsEarned = (earnedPoints: number) => {
     setPoints(prev => ({
       ...prev,
-      current: prev.current + earned
+      current: earnedPoints // Use the exact earned points from progress
     }));
   };
 
