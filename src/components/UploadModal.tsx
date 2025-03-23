@@ -77,30 +77,31 @@ const UploadModal: React.FC<UploadModalProps> = ({
       
       // Format: {user_id}/{timestamp}_{filename}
       const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
       
-      // Convert the file to a Blob to ensure it's properly formatted
-      const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
+      // Compress and resize the image before uploading if it's too large
+      const compressedFile = await compressImage(file);
       
       const { data, error } = await supabase.storage
         .from('screenshots')
-        .upload(filePath, fileBlob, {
+        .upload(filePath, compressedFile, {
           cacheControl: '3600',
           contentType: file.type,
-          upsert: false
+          upsert: true // Use upsert to replace if file exists
         });
         
       if (error) throw error;
       
-      // Get the public URL
+      // Get the public URL with correct CORS settings
       const { data: { publicUrl } } = supabase.storage
         .from('screenshots')
         .getPublicUrl(filePath);
         
       console.log('Uploaded image URL:', publicUrl);
       
-      // Explicitly add cache-busting query parameter to avoid caching issues
-      return `${publicUrl}?t=${Date.now()}`;
+      // Return the full public URL with required parameters
+      return publicUrl;
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
@@ -112,6 +113,64 @@ const UploadModal: React.FC<UploadModalProps> = ({
     } finally {
       setUploading(false);
     }
+  };
+
+  // Function to compress and resize images before upload
+  const compressImage = async (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          // Create a canvas element
+          const canvas = document.createElement('canvas');
+          
+          // Define max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          
+          // Calculate new dimensions while maintaining aspect ratio
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round(height * (MAX_WIDTH / width));
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round(width * (MAX_HEIGHT / height));
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          // Set canvas dimensions
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw resized image to canvas
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert canvas to blob
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                // If compression fails, use original file
+                resolve(file);
+              }
+            },
+            file.type,
+            0.8 // Quality parameter (0.8 = 80% quality)
+          );
+        };
+      };
+    });
   };
 
   const handleContinue = async () => {
