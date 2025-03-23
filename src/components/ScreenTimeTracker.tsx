@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Clock, Upload, Image, X, AlertCircle, ImageOff } from 'lucide-react';
+import { Clock, Upload, Image as ImageIcon, X, AlertCircle, ImageOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
@@ -71,7 +71,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         // Preload images to check for errors
         formattedEntries.forEach(entry => {
           if (entry.screenshotUrl) {
-            const img = new Image();
+            const img = document.createElement('img');
             img.onload = () => {
               console.log(`Successfully loaded image for entry ${entry.id}`);
             };
@@ -265,7 +265,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     // Force browser to reload image by adding a cache-busting parameter
     const cacheBustUrl = `${url}?t=${Date.now()}`;
     
-    const img = new Image();
+    const img = document.createElement('img');
     img.onload = () => {
       // Image loaded successfully, update the entry
       setScreenTimeEntries(prev => 
