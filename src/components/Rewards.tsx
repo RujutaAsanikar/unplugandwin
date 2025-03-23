@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Upload } from 'lucide-react';
@@ -70,9 +71,7 @@ const Rewards: React.FC = () => {
     }
   };
 
-  const pointsPercentage = Math.min(100, Math.round((points.current / points.target) * 100));
   const pointsLeft = points.target - points.current;
-  
   const remainingScreenshots = Math.max(0, 30 - entriesCount);
 
   return (
@@ -90,11 +89,11 @@ const Rewards: React.FC = () => {
 
           <div className="mb-8 p-5 glassmorphism rounded-xl border border-primary/20 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium text-lg">Points Progress</h3>
-              <div className="text-right font-medium text-lg">{pointsPercentage}% Complete</div>
+              <h3 className="font-medium text-lg">Challenge Progress</h3>
+              <div className="text-right font-medium text-lg">{progressPercentage}% Complete</div>
             </div>
             
-            <Progress value={pointsPercentage} className="h-3 mb-4" />
+            <Progress value={progressPercentage} className="h-3 mb-4" />
             
             <div className="flex flex-col gap-4 mt-6">
               <div className="flex items-center gap-2 justify-center bg-primary/10 px-4 py-3 rounded-full">
@@ -108,35 +107,6 @@ const Rewards: React.FC = () => {
                 <span className="font-medium text-primary">{pointsLeft.toLocaleString()}</span> 
                 <span className="text-muted-foreground"> points left to reach your target</span>
               </div>
-            </div>
-          </div>
-          
-          <div className="mb-8 p-5 glassmorphism rounded-xl border border-primary/20 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium text-lg">Challenge Progress</h3>
-              <div className="text-right font-medium text-lg">{progressPercentage}% Complete</div>
-            </div>
-            
-            <Progress value={progressPercentage} className="h-3 mb-4" />
-            
-            <div className="flex flex-col gap-4 mt-6">
-              <div className="flex items-center gap-2 justify-center bg-primary/10 px-4 py-3 rounded-full">
-                <Trophy className="h-5 w-5 text-primary" />
-                <span className="font-medium text-primary">
-                  {entriesCount} / 30 Screenshots
-                </span>
-              </div>
-              
-              {progressPercentage < 100 ? (
-                <div className="text-center">
-                  <span className="font-medium text-primary">{remainingScreenshots}</span> 
-                  <span className="text-muted-foreground"> more screenshots needed to complete the challenge</span>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <span className="text-green-600 font-medium">Challenge completed! 🎉</span>
-                </div>
-              )}
               
               {progressPercentage < 100 && (
                 <div className="text-center mt-2">
