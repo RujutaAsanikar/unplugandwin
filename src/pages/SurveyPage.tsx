@@ -6,9 +6,17 @@ import SurveyForm from '@/components/SurveyForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+import AuthModal from '@/components/AuthModal';
 
 const SurveyPage = () => {
   const [completed, setCompleted] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  const handleSignUpClick = () => {
+    setShowAuthModal(true);
+  };
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-secondary/10">
@@ -44,14 +52,30 @@ const SurveyPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center pb-8">
-                <p className="mb-4 text-gray-600">
+                <p className="mb-6 text-gray-600">
                   Please create an account to track your digital detox progress and earn rewards.
                 </p>
+                <div className="flex justify-center">
+                  <Button 
+                    size="lg" 
+                    className="bg-primary hover:bg-primary/90 font-medium"
+                    onClick={handleSignUpClick}
+                  >
+                    Sign up now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
         )}
       </motion.div>
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        defaultMode="signup"
+      />
     </div>
   );
 };
