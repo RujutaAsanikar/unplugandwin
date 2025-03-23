@@ -67,6 +67,25 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         }));
         
         setScreenTimeEntries(formattedEntries);
+        
+        // Preload images to check for errors
+        formattedEntries.forEach(entry => {
+          if (entry.screenshotUrl) {
+            const img = new Image();
+            img.onload = () => {
+              console.log(`Successfully loaded image for entry ${entry.id}`);
+            };
+            img.onerror = () => {
+              console.error(`Failed to load image for entry ${entry.id}: ${entry.screenshotUrl}`);
+              setImageErrors(prev => ({
+                ...prev,
+                [entry.id]: true
+              }));
+            };
+            img.crossOrigin = "anonymous";
+            img.src = entry.screenshotUrl;
+          }
+        });
       }
     } catch (error) {
       console.error('Error fetching entries:', error);
@@ -180,6 +199,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   };
 
   const handleImageUpload = (imageUrl: string) => {
+    console.log('Image uploaded:', imageUrl);
     setSelectedImage(imageUrl);
     setUploadModalOpen(false);
     setTimeInputModalOpen(true);
@@ -222,10 +242,44 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   };
 
   const handleImageError = (entryId: string) => {
+    console.log(`Image error detected for entry ${entryId}`);
     setImageErrors(prev => ({
       ...prev,
       [entryId]: true
     }));
+  };
+
+  const retryLoadImage = (entryId: string, url: string) => {
+    console.log(`Retrying image load for entry ${entryId}`);
+    setImageErrors(prev => {
+      const newErrors = {...prev};
+      delete newErrors[entryId];
+      return newErrors;
+    });
+    
+    // Force browser to reload image by adding a cache-busting parameter
+    const cacheBustUrl = `${url}?t=${Date.now()}`;
+    
+    const img = new Image();
+    img.onload = () => {
+      // Image loaded successfully, update the entry
+      setScreenTimeEntries(prev => 
+        prev.map(entry => 
+          entry.id === entryId 
+            ? {...entry, screenshotUrl: cacheBustUrl} 
+            : entry
+        )
+      );
+    };
+    img.onerror = () => {
+      // Image still failing to load
+      setImageErrors(prev => ({
+        ...prev,
+        [entryId]: true
+      }));
+    };
+    img.crossOrigin = "anonymous";
+    img.src = cacheBustUrl;
   };
 
   const sortedEntries = [...screenTimeEntries].sort(
@@ -336,6 +390,14 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                             <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                               <ImageOff className="w-8 h-8 mb-2" />
                               <p className="text-xs text-center">Image could not be loaded</p>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="mt-2"
+                                onClick={() => entry.screenshotUrl && retryLoadImage(entry.id, entry.screenshotUrl)}
+                              >
+                                Retry
+                              </Button>
                             </div>
                           )}
                         </>

@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="font-bold text-2xl text-primary tracking-tighter">UnplugAndWin</span>
+              <span className="font-bold text-xl md:text-2xl text-primary tracking-tighter whitespace-nowrap">UnplugAndWin</span>
             </Link>
           </div>
           

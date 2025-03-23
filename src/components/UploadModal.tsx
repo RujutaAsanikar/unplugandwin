@@ -79,9 +79,16 @@ const UploadModal: React.FC<UploadModalProps> = ({
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
+      // Convert the file to a Blob to ensure it's properly formatted
+      const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
+      
       const { data, error } = await supabase.storage
         .from('screenshots')
-        .upload(filePath, file);
+        .upload(filePath, fileBlob, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: false
+        });
         
       if (error) throw error;
       
@@ -90,7 +97,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
         .from('screenshots')
         .getPublicUrl(filePath);
         
-      return publicUrl;
+      console.log('Uploaded image URL:', publicUrl);
+      
+      // Explicitly add cache-busting query parameter to avoid caching issues
+      return `${publicUrl}?t=${Date.now()}`;
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
