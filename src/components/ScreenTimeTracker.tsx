@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Clock, Upload, Smartphone, AlertCircle } from 'lucide-react';
+import { Clock, Upload, Smartphone, AlertCircle, ImageOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
@@ -26,6 +26,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -220,6 +221,13 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     setUploadModalOpen(true);
   };
 
+  const handleImageError = (entryId: string) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [entryId]: true
+    }));
+  };
+
   const sortedEntries = [...screenTimeEntries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -315,11 +323,22 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                   >
                     <div className="relative aspect-video bg-gray-50">
                       {entry.screenshotUrl ? (
-                        <img
-                          src={entry.screenshotUrl}
-                          alt={`Screenshot from ${entry.date}`}
-                          className="w-full h-full object-contain bg-gray-50"
-                        />
+                        <>
+                          {!imageErrors[entry.id] ? (
+                            <img
+                              src={entry.screenshotUrl}
+                              alt={`Screenshot from ${entry.date}`}
+                              className="w-full h-full object-contain bg-gray-50"
+                              onError={() => handleImageError(entry.id)}
+                              crossOrigin="anonymous"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                              <ImageOff className="w-8 h-8 mb-2" />
+                              <p className="text-xs text-center">Image could not be loaded</p>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Clock className="w-8 h-8 text-gray-300" />
