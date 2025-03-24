@@ -52,6 +52,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Reset form state
+    setIsSubmitting(true);
+    
     // Basic validation
     if (!validateEmail(email)) {
       toast({
@@ -59,6 +62,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
         description: "Please enter a valid email address",
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
     
@@ -68,21 +72,22 @@ const AuthModal: React.FC<AuthModalProps> = ({
         description: "Password must be at least 6 characters long",
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
-    
-    setIsSubmitting(true);
     
     try {
       if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (!error) {
+          // Only reset fields on success
           setEmail('');
           setPassword('');
         }
       } else {
         const { error } = await signUp(email, password);
         if (!error) {
+          // Only reset fields on success
           setEmail('');
           setPassword('');
         }
@@ -121,6 +126,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 className="pl-10"
                 placeholder="your@email.com"
                 required
+                autoComplete="email"
               />
             </div>
           </div>
@@ -138,6 +144,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="••••••••"
                 required
                 minLength={6}
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               />
             </div>
           </div>

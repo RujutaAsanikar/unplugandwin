@@ -65,6 +65,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Attempting to sign in with:", email);
+      
+      // Add some basic client-side validation
+      if (!email || !password) {
+        throw new Error("Email and password are required");
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -84,9 +90,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { data, error: null };
     } catch (error) {
       console.error("Sign in error:", error.message);
+      
+      // Provide more user-friendly error messages
+      let errorMessage = error.message;
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "The email or password you entered is incorrect. Please try again.";
+      }
+      
       toast({
         title: "Login failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       return { data: { user: null, session: null }, error };
@@ -96,6 +109,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     try {
       console.log("Attempting to sign up with:", email);
+      
+      // Add some basic client-side validation
+      if (!email || !password) {
+        throw new Error("Email and password are required");
+      }
+      
+      if (password.length < 6) {
+        throw new Error("Password should be at least 6 characters long");
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -111,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (data.user?.identities?.length === 0) {
         toast({
-          title: "Email already exists",
+          title: "Account already exists",
           description: "This email is already registered. Please sign in instead.",
           variant: "destructive",
         });
@@ -127,9 +150,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { data, error: null };
     } catch (error) {
       console.error("Sign up error:", error.message);
+      
+      // Provide more user-friendly error messages
+      let errorMessage = error.message;
+      if (error.message.includes("duplicate key")) {
+        errorMessage = "This email is already registered. Please sign in instead.";
+      }
+      
       toast({
         title: "Sign up failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       return { data: { user: null, session: null }, error };

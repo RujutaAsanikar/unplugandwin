@@ -83,6 +83,17 @@ const UploadModal: React.FC<UploadModalProps> = ({
       // Compress and resize the image before uploading if it's too large
       const compressedFile = await compressImage(file);
       
+      // Make sure the screenshots bucket exists
+      const { data: bucketExists } = await supabase.storage.getBucket('screenshots');
+      if (!bucketExists) {
+        // Create the bucket if it doesn't exist
+        await supabase.storage.createBucket('screenshots', {
+          public: true,
+          allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif'],
+          fileSizeLimit: 5242880 // 5MB
+        });
+      }
+      
       const { data, error } = await supabase.storage
         .from('screenshots')
         .upload(filePath, compressedFile, {
@@ -93,15 +104,22 @@ const UploadModal: React.FC<UploadModalProps> = ({
         
       if (error) throw error;
       
-      // Get the public URL with correct CORS settings
+      // Get the public URL with correct CORS settings and cache busting
+      const timestamp = Date.now();
       const { data: { publicUrl } } = supabase.storage
         .from('screenshots')
         .getPublicUrl(filePath);
         
-      console.log('Uploaded image URL:', publicUrl);
+      // Add a timestamp parameter to force fresh load
+      const publicUrlWithTimestamp = `${publicUrl}?t=${timestamp}`;
+      
+      console.log('Uploaded image URL:', publicUrlWithTimestamp);
+      
+      // Preload the image to ensure it loads properly
+      await preloadImage(publicUrlWithTimestamp);
       
       // Return the full public URL with required parameters
-      return publicUrl;
+      return publicUrlWithTimestamp;
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
@@ -113,6 +131,20 @@ const UploadModal: React.FC<UploadModalProps> = ({
     } finally {
       setUploading(false);
     }
+  };
+
+  // Preload image to ensure it loads properly
+  const preloadImage = (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = document.createElement('img');
+      img.onload = () => resolve(true);
+      img.onerror = () => {
+        console.error("Failed to preload image:", url);
+        resolve(false);
+      };
+      img.src = url;
+      img.crossOrigin = "anonymous";
+    });
   };
 
   // Function to compress and resize images before upload
@@ -189,6 +221,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
     
     if (imageUrl) {
       onUpload(imageUrl);
+      
+      // After successful upload, reset the state
+      setPreview(null);
+      setFile(null);
     }
   };
 
