@@ -23,12 +23,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import AuthModal from './AuthModal';
 
+// Phone number validation regex (international format)
+const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+
 // Define schema for form validation
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
-  age: z.string()
-    .refine(val => !isNaN(Number(val)), { message: "Age must be a number" })
-    .refine(val => Number(val) >= 5 && Number(val) <= 20, { message: "Age must be between 5 and 20" }),
+  age: z.string().min(1, { message: "Age is required" }),
   deviceAccess: z.string().min(1, { message: "Device access information is required" }),
   socialMediaPlatforms: z.array(z.string()).min(1, { message: "Please select at least one social media platform" }),
   dailyScreenTime: z.string().min(1, { message: "Daily screen time information is required" }),
@@ -51,8 +52,12 @@ const formSchema = z.object({
       },
       { message: "Please specify your custom reward" }
     ),
-  personalPhone: z.string().min(1, { message: "Your phone number is required" }),
-  parentPhone: z.string().min(1, { message: "Parent/guardian phone number is required" }),
+  personalPhone: z.string()
+    .min(1, { message: "Your phone number is required" })
+    .regex(phoneRegex, { message: "Please enter a valid phone number" }),
+  parentPhone: z.string()
+    .min(1, { message: "Parent/guardian phone number is required" })
+    .regex(phoneRegex, { message: "Please enter a valid phone number" }),
 });
 
 type SurveyFormData = z.infer<typeof formSchema>;
@@ -106,6 +111,12 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
     "Electronics/gadgets", "Extra privileges", "Educational opportunities",
     "Subscription services", "Custom rewards (specify in comments)"
   ];
+
+  // Age options for dropdown
+  const ageOptions = Array.from({ length: 16 }, (_, i) => i + 5).map(age => ({
+    value: age.toString(),
+    label: age.toString()
+  }));
 
   const nextStep = () => {
     const fieldsToValidate = currentStep === 1 
@@ -298,23 +309,25 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Your Age <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min={5}
-                      max={20}
-                      placeholder="Enter your age (5-20)"
-                      {...field}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '' || (Number(value) >= 5 && Number(value) <= 20)) {
-                          field.onChange(value);
-                        }
-                      }}
-                    />
-                  </FormControl>
+                  <Select 
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your age" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ageOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormDescription>
-                    Please enter your age between 5 and 20 years.
+                    Please select your age between 5 and 20 years.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -328,8 +341,15 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
                 <FormItem>
                   <FormLabel>Your Phone Number <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="Enter your phone number" {...field} />
+                    <Input 
+                      type="tel" 
+                      placeholder="e.g. +1234567890" 
+                      {...field} 
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Please enter a valid phone number with country code (e.g., +1234567890)
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -342,8 +362,15 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
                 <FormItem>
                   <FormLabel>Parent/Guardian Phone Number <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="Enter parent's phone number" {...field} />
+                    <Input 
+                      type="tel" 
+                      placeholder="e.g. +1234567890" 
+                      {...field} 
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Please enter a valid phone number with country code (e.g., +1234567890)
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
