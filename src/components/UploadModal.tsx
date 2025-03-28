@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -83,17 +82,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
       // Compress and resize the image before uploading if it's too large
       const compressedFile = await compressImage(file);
       
-      // Make sure the screenshots bucket exists
-      const { data: bucketExists } = await supabase.storage.getBucket('screenshots');
-      if (!bucketExists) {
-        // Create the bucket if it doesn't exist
-        await supabase.storage.createBucket('screenshots', {
-          public: true,
-          allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif'],
-          fileSizeLimit: 5242880 // 5MB
-        });
-      }
-      
+      // Upload to the public screenshots bucket
       const { data, error } = await supabase.storage
         .from('screenshots')
         .upload(filePath, compressedFile, {
