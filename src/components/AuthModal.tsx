@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AuthModalProps {
@@ -24,6 +24,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const { toast } = useToast();
   
   const { signIn, signUp, user } = useAuth();
@@ -41,56 +44,64 @@ const AuthModal: React.FC<AuthModalProps> = ({
     console.log("Mode updated to:", defaultMode);
   }, [defaultMode]);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // Reset form state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setEmail('');
+      setPassword('');
+      setEmailError('');
+      setPasswordError('');
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      setEmailError('Email is required');
+      return false;
+    } else if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError('');
+    return true;
   };
 
-  const validatePassword = (password: string) => {
-    return password.length >= 6;
+  const validatePassword = (password: string): boolean => {
+    if (!password) {
+      setPasswordError('Password is required');
+      return false;
+    } else if (mode === 'signup' && password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long');
+      return false;
+    }
+    setPasswordError('');
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Reset form state
+    // Reset errors
+    setEmailError('');
+    setPasswordError('');
+    
+    // Validate inputs
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
+    
     setIsSubmitting(true);
-    
-    // Basic validation
-    if (!validateEmail(email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-      return;
-    }
-    
-    if (!validatePassword(password)) {
-      toast({
-        title: "Invalid password",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-      return;
-    }
     
     try {
       if (mode === 'login') {
-        const { error } = await signIn(email, password);
-        if (!error) {
-          // Only reset fields on success
-          setEmail('');
-          setPassword('');
-        }
+        await signIn(email, password);
       } else {
-        const { error } = await signUp(email, password);
-        if (!error) {
-          // Only reset fields on success
-          setEmail('');
-          setPassword('');
-        }
+        await signUp(email, password);
       }
     } catch (error) {
       console.error('Authentication error:', error);
@@ -101,6 +112,12 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
   const toggleMode = () => {
     setMode(mode === 'login' ? 'signup' : 'login');
+    setEmailError('');
+    setPasswordError('');
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -122,13 +139,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) validateEmail(e.target.value);
+                }}
+                className={`pl-10 ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="your@email.com"
                 required
                 autoComplete="email"
               />
             </div>
+            {emailError && <p className="text-sm text-red-500 mt-1">{emailError}</p>}
           </div>
           
           <div className="space-y-2">
@@ -137,16 +158,28 @@ const AuthModal: React.FC<AuthModalProps> = ({
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) validatePassword(e.target.value);
+                }}
+                className={`pl-10 pr-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={mode === 'signup' ? 6 : undefined}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
+            {passwordError && <p className="text-sm text-red-500 mt-1">{passwordError}</p>}
           </div>
           
           <AnimatePresence mode="wait">

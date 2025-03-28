@@ -29,25 +29,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      console.log("Auth state changed:", _event, newSession?.user?.email);
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
       setIsLoading(false);
     });
 
     // THEN check for existing session
     const setData = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Error getting session:", error);
         } else {
-          console.log("Initial session check:", session?.user?.email || "No session");
+          console.log("Initial session check:", existingSession?.user?.email || "No session");
         }
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(existingSession);
+        setUser(existingSession?.user ?? null);
         setIsLoading(false);
       } catch (err) {
         console.error("Unexpected error during session check:", err);
@@ -92,9 +92,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Sign in error:", error.message);
       
       // Provide more user-friendly error messages
-      let errorMessage = error.message;
+      let errorMessage = "An error occurred during sign in";
+      
       if (error.message.includes("Invalid login credentials")) {
         errorMessage = "The email or password you entered is incorrect. Please try again.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Please verify your email address before signing in.";
+      } else if (error.message.includes("rate limit")) {
+        errorMessage = "Too many sign in attempts. Please try again later.";
       }
       
       toast({
@@ -102,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: errorMessage,
         variant: "destructive",
       });
+      
       return { data: { user: null, session: null }, error };
     }
   };

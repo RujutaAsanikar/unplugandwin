@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, DollarSign, BarChart3, Home, Info } from 'lucide-react';
+import { Trophy, DollarSign, Info, Home } from 'lucide-react';
 import AuthButton from './AuthButton';
 
 interface HeaderProps {
@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="font-bold text-xl md:text-2xl text-primary tracking-tighter whitespace-nowrap px-1">UnplugAndWin</span>
+              <span className="font-bold text-xl md:text-2xl text-primary tracking-tight whitespace-nowrap px-1">UnplugAndWin</span>
             </Link>
           </div>
           
