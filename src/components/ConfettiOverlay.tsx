@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Trophy, Award, PartyPopper, X } from 'lucide-react';
 
 interface ConfettiOverlayProps {
@@ -73,89 +73,98 @@ const ConfettiOverlay: React.FC<ConfettiOverlayProps> = ({ isVisible, onClose })
     }
   }, [isVisible]);
 
+  const handleClose = () => {
+    setShowModal(false);
+    onClose();
+  };
+
   if (!showModal) return null;
   
   return (
-    <motion.div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <motion.div 
-        className="bg-white rounded-xl p-8 max-w-md mx-auto text-center shadow-lg border border-primary/20 relative"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", duration: 0.5 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close button */}
-        <button 
-          onClick={onClose} 
-          className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5 text-gray-400" />
-        </button>
-        
-        <div className="mb-4 flex justify-center">
-          <div className="relative">
-            <div className="absolute -top-3 -left-3">
-              <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
-            </div>
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Trophy className="h-10 w-10 text-primary" />
-            </div>
-            <div className="absolute -top-3 -right-3">
-              <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
-            </div>
-            <div className="absolute -bottom-1 right-0">
-              <PartyPopper className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </div>
-        
-        <motion.h2 
-          className="text-2xl font-bold text-primary mb-2"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          Congratulations!
-        </motion.h2>
-        
-        <motion.p 
-          className="text-gray-600 mb-6"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          You've successfully completed the 30-day Digital Detox Challenge! 
-          Your dedication to reducing social media usage has earned you the full reward!
-        </motion.p>
-        
+    <AnimatePresence>
+      {showModal && (
         <motion.div 
-          className="flex justify-center items-center gap-2 mb-4 py-3 px-4 bg-primary/5 rounded-lg"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleClose}
         >
-          <Award className="h-5 w-5 text-amber-500" />
-          <span className="text-lg font-semibold">+30,000 points earned!</span>
+          <motion.div 
+            className="bg-white rounded-xl p-8 max-w-md mx-auto text-center shadow-lg border border-primary/20 relative"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", duration: 0.5 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={handleClose} 
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5 text-gray-400" />
+            </button>
+            
+            <div className="mb-4 flex justify-center">
+              <div className="relative">
+                <div className="absolute -top-3 -left-3">
+                  <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
+                </div>
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Trophy className="h-10 w-10 text-primary" />
+                </div>
+                <div className="absolute -top-3 -right-3">
+                  <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
+                </div>
+                <div className="absolute -bottom-1 right-0">
+                  <PartyPopper className="h-6 w-6 text-primary" />
+                </div>
+              </div>
+            </div>
+            
+            <motion.h2 
+              className="text-2xl font-bold text-primary mb-2"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Congratulations!
+            </motion.h2>
+            
+            <motion.p 
+              className="text-gray-600 mb-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              You've successfully completed the 30-day Digital Detox Challenge! 
+              Your dedication to reducing social media usage has earned you the full reward!
+            </motion.p>
+            
+            <motion.div 
+              className="flex justify-center items-center gap-2 mb-4 py-3 px-4 bg-primary/5 rounded-lg"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Award className="h-5 w-5 text-amber-500" />
+              <span className="text-lg font-semibold">+30,000 points earned!</span>
+            </motion.div>
+            
+            <motion.button
+              className="w-full py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              onClick={handleClose}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              Awesome!
+            </motion.button>
+          </motion.div>
         </motion.div>
-        
-        <motion.button
-          className="w-full py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-          onClick={onClose}
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          Awesome!
-        </motion.button>
-      </motion.div>
-    </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
