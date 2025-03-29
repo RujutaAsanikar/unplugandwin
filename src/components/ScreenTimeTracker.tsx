@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -458,14 +459,19 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                             alt={`Screenshot from ${entry.date}`}
                             className="w-full h-full object-contain bg-gray-50"
                             onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling!.style.display = 'flex';
+                              // Fix: Use HTMLImageElement instead of Element
+                              const imgElement = e.currentTarget as HTMLImageElement;
+                              imgElement.style.display = 'none';
+                              // Use optional chaining with type assertion for nextElementSibling
+                              const nextElement = imgElement.nextElementSibling as HTMLDivElement;
+                              if (nextElement) {
+                                nextElement.style.display = 'flex';
+                              }
                             }}
                             loading="lazy"
                           />
                           <div 
                             className="w-full h-full flex-col items-center justify-center text-gray-400 hidden"
-                            style={{display: 'none'}}
                           >
                             <div className="w-full h-full flex flex-col items-center justify-center">
                               <ImageIcon className="w-8 h-8 mb-2" />
