@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [generalError, setGeneralError] = useState('');
   const { toast } = useToast();
   
   const { signIn, signUp, user } = useAuth();
@@ -51,16 +53,19 @@ const AuthModal: React.FC<AuthModalProps> = ({
       setPassword('');
       setEmailError('');
       setPasswordError('');
+      setGeneralError('');
       setIsSubmitting(false);
     }
   }, [isOpen]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
+    const trimmedEmail = email.trim();
+    
+    if (!trimmedEmail) {
       setEmailError('Email is required');
       return false;
-    } else if (!emailRegex.test(email)) {
+    } else if (!emailRegex.test(trimmedEmail)) {
       setEmailError('Please enter a valid email address');
       return false;
     }
@@ -86,9 +91,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
     // Reset errors
     setEmailError('');
     setPasswordError('');
+    setGeneralError('');
     
     // Validate inputs
-    const isEmailValid = validateEmail(email);
+    const trimmedEmail = email.trim();
+    const isEmailValid = validateEmail(trimmedEmail);
     const isPasswordValid = validatePassword(password);
     
     if (!isEmailValid || !isPasswordValid) {
@@ -98,13 +105,20 @@ const AuthModal: React.FC<AuthModalProps> = ({
     setIsSubmitting(true);
     
     try {
+      let response;
+      
       if (mode === 'login') {
-        await signIn(email, password);
+        response = await signIn(trimmedEmail, password);
       } else {
-        await signUp(email, password);
+        response = await signUp(trimmedEmail, password);
+      }
+      
+      if (response.error) {
+        setGeneralError(response.error.message);
       }
     } catch (error) {
       console.error('Authentication error:', error);
+      setGeneralError(error.message || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -114,6 +128,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     setMode(mode === 'login' ? 'signup' : 'login');
     setEmailError('');
     setPasswordError('');
+    setGeneralError('');
   };
 
   const togglePasswordVisibility = () => {
@@ -131,6 +146,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          {generalError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{generalError}</AlertDescription>
+            </Alert>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
@@ -143,6 +165,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   setEmail(e.target.value);
                   if (emailError) validateEmail(e.target.value);
                 }}
+                onBlur={() => validateEmail(email)}
                 className={`pl-10 ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="your@email.com"
                 required
@@ -164,6 +187,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   setPassword(e.target.value);
                   if (passwordError) validatePassword(e.target.value);
                 }}
+                onBlur={() => validatePassword(password)}
                 className={`pl-10 pr-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="••••••••"
                 required

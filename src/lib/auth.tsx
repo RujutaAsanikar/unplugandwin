@@ -71,6 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Email and password are required");
       }
       
+      // Make sure we're using proper email formatting
+      email = email.trim().toLowerCase();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -124,6 +127,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (password.length < 6) {
         throw new Error("Password should be at least 6 characters long");
       }
+      
+      // Make sure we're using proper email formatting
+      email = email.trim().toLowerCase();
       
       const { data, error } = await supabase.auth.signUp({
         email,
