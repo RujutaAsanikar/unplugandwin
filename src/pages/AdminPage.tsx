@@ -87,9 +87,6 @@ const AdminPage = () => {
 
       if (completedUserIds.length > 0) {
         const userData = await Promise.all(completedUserIds.map(async (userId) => {
-          // Get user details
-          const { data: userDetails } = await supabase.auth.admin.getUserById(userId);
-          
           // Get user profile for username
           const { data: profileData } = await supabase
             .from('profiles')
@@ -97,6 +94,9 @@ const AdminPage = () => {
             .eq('id', userId)
             .single();
             
+          // Get user details
+          const { data: userDetails } = await supabase.auth.admin.getUserById(userId);
+          
           // Get user's screenshots count
           const { count: screenshotCount } = await supabase
             .from('screen_time_entries')
@@ -115,11 +115,14 @@ const AdminPage = () => {
           if (latestEntryData && latestEntryData[0] && latestEntryData[0].created_at) {
             completionDate = new Date(latestEntryData[0].created_at).toLocaleDateString();
           }
+
+          // Use the username from profile data if available
+          const username = profileData?.username || userDetails?.user?.email?.split('@')[0] || 'Unknown User';
             
           return {
             userId,
             userEmail: userDetails?.user?.email || 'Unknown User',
-            username: profileData?.username || userDetails?.user?.email?.split('@')[0] || 'Unknown User',
+            username,
             completionDate,
             screenshotCount: screenshotCount || 0
           };
