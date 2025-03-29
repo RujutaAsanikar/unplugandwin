@@ -12,7 +12,8 @@ import {
   startChallenge, 
   isChallengeStarted,
   updateChallengeProgress,
-  getRemainingScreenshots
+  getRemainingScreenshots,
+  getEntriesCount
 } from '@/lib/challengeManager';
 import { supabase } from '@/integrations/supabase/client';
 import ConfettiOverlay from '@/components/ConfettiOverlay';
@@ -49,12 +50,48 @@ const ChallengePage = () => {
     }
   }, [challengeProgress]);
 
+  useEffect(() => {
+    if (challengeStarted && user) {
+      checkForCompletion();
+    }
+  }, [challengeStarted, user]);
+
+  const checkForCompletion = async () => {
+    if (!user) return;
+    
+    try {
+      const entriesCount = await getEntriesCount(user.id);
+      if (entriesCount >= 30) {
+        const updatedProgress = await updateChallengeProgress(user.id);
+        setChallengeProgress(100);
+        
+        const hasSeenCompletionCelebration = localStorage.getItem('hasSeenCompletionCelebration');
+        if (hasSeenCompletionCelebration !== 'true') {
+          setShowConfetti(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking completion:", error);
+    }
+  };
+
   const loadProgress = async () => {
     const updatedProgress = await updateChallengeProgress(user?.id);
     setChallengeProgress(updatedProgress);
     
     const remaining = await getRemainingScreenshots(user?.id);
     setRemainingScreenshots(remaining);
+    
+    const entriesCount = await getEntriesCount(user?.id);
+    if (entriesCount >= 30) {
+      setChallengeProgress(100);
+      setRemainingScreenshots(0);
+      
+      const hasSeenCompletionCelebration = localStorage.getItem('hasSeenCompletionCelebration');
+      if (hasSeenCompletionCelebration !== 'true') {
+        setShowConfetti(true);
+      }
+    }
   };
 
   const checkAdminStatus = async () => {
@@ -85,6 +122,11 @@ const ChallengePage = () => {
       title: "Challenge started!",
       description: "You've successfully started the 30-day social media reduction challenge",
     });
+  };
+
+  const handleCloseConfetti = () => {
+    setShowConfetti(false);
+    localStorage.setItem('hasSeenCompletionCelebration', 'true');
   };
 
   const containerVariants = {
@@ -251,7 +293,9 @@ const ChallengePage = () => {
               </div>
               
               <div className="mt-4 p-4 bg-gray-50 rounded-xl text-center">
-                <p className="font-medium">Challenge In Progress</p>
+                <p className="font-medium">
+                  {challengeProgress >= 100 ? "Challenge Completed" : "Challenge In Progress"}
+                </p>
               </div>
             </motion.div>
           )}
@@ -266,7 +310,7 @@ const ChallengePage = () => {
 
         <ConfettiOverlay 
           isVisible={showConfetti} 
-          onClose={() => setShowConfetti(false)} 
+          onClose={() => handleCloseConfetti()} 
         />
       </main>
     </motion.div>

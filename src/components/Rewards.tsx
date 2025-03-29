@@ -31,7 +31,8 @@ const Rewards: React.FC = () => {
       const count = await getEntriesCount(user?.id);
       setEntriesCount(count);
       
-      const progress = calculateProgressPercentage(count);
+      // Force 100% progress if we have 30 or more entries
+      const progress = count >= 30 ? 100 : calculateProgressPercentage(count);
       setProgressPercentage(progress);
       
       await updateChallengeProgress(user?.id);

@@ -1,4 +1,3 @@
-
 // Challenge manager to track and update challenge progress
 import { supabase } from '@/integrations/supabase/client';
 
@@ -6,14 +5,22 @@ import { supabase } from '@/integrations/supabase/client';
 export const calculateProgressPercentage = (entriesCount: number): number => {
   if (entriesCount === 0) return 0;
   
+  // When all 30 screenshots are uploaded, return 100%
+  if (entriesCount >= 30) return 100;
+  
   // First screenshot is worth 11%
   if (entriesCount === 1) return 11;
   
-  // Each subsequent screenshot (up to 30 total) adds 3%
-  const subsequentProgress = Math.min(entriesCount - 1, 29) * 3;
+  // Each subsequent screenshot (up to 29) adds ~3.07% to ensure we hit 100% at 30
+  const remainingPercentage = 89; // 100 - 11
+  const remainingEntries = 29; // 30 - 1
+  const percentPerEntry = remainingPercentage / remainingEntries;
   
-  // Cap total progress at 100%
-  return Math.min(11 + subsequentProgress, 100);
+  // Calculate percentage for screenshots 2-29
+  const subsequentProgress = Math.min(entriesCount - 1, 29) * percentPerEntry;
+  
+  // Return rounded percentage (first screenshot's 11% plus subsequent progress)
+  return Math.round(11 + subsequentProgress);
 };
 
 // Get the current challenge progress from localStorage
@@ -100,6 +107,12 @@ export const updateChallengeProgress = async (userId?: string): Promise<number> 
   
   // Save the updated progress
   saveChallengeProgress(newProgress);
+  
+  // Force 100% completion if we have 30 or more entries
+  if (entriesCount >= 30 && newProgress !== 100) {
+    saveChallengeProgress(100);
+    return 100;
+  }
   
   // Update points based on progress (1000 points per screenshot)
   if (entriesCount >= 0) {
