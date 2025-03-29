@@ -4,10 +4,11 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, User, AlertTriangle } from 'lucide-react';
+import { Shield, User, AlertTriangle, Image } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 interface CompletedChallenge {
   userId: string;
@@ -163,17 +164,29 @@ const AdminPage = () => {
             </CardHeader>
           </Card>
         ) : !isAdmin ? (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardHeader>
-              <CardTitle className="flex items-center text-amber-700">
-                <Shield className="mr-2 h-5 w-5" />
-                Access Restricted
-              </CardTitle>
-              <CardDescription className="text-amber-600">
-                This area is restricted to administrators only.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <div className="space-y-6">
+            <Card className="border-amber-200 bg-amber-50">
+              <CardHeader>
+                <CardTitle className="flex items-center text-amber-700">
+                  <Shield className="mr-2 h-5 w-5" />
+                  Access Restricted
+                </CardTitle>
+                <CardDescription className="text-amber-600">
+                  This area is restricted to administrators only.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4">To become an admin, add your user ID to the admin_users table in Supabase:</p>
+                <div className="p-4 bg-gray-100 rounded-md overflow-x-auto mb-4">
+                  <code className="text-sm whitespace-pre-wrap break-all">
+                    INSERT INTO public.admin_users (user_id)<br />
+                    VALUES ('{user.id}');
+                  </code>
+                </div>
+                <p>Your user ID: <span className="font-mono bg-gray-100 p-1 rounded">{user.id}</span></p>
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -199,30 +212,49 @@ const AdminPage = () => {
                     No users have completed the challenge yet.
                   </p>
                 ) : (
-                  <div className="border rounded-md">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-muted/50">
-                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">User</th>
-                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Completion Date</th>
-                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Screenshots</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {completedChallenges.map((challenge, index) => (
-                          <tr key={challenge.userId} className={index % 2 === 0 ? 'bg-white' : 'bg-muted/20'}>
-                            <td className="p-3 flex items-center">
-                              <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                              {challenge.userEmail}
-                            </td>
-                            <td className="p-3">{challenge.completionDate}</td>
-                            <td className="p-3">{challenge.screenshotCount}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Completion Date</TableHead>
+                        <TableHead>Screenshots</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {completedChallenges.map((challenge) => (
+                        <TableRow key={challenge.userId}>
+                          <TableCell className="flex items-center">
+                            <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {challenge.userEmail}
+                          </TableCell>
+                          <TableCell>{challenge.completionDate}</TableCell>
+                          <TableCell>{challenge.screenshotCount}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Image className="mr-2 h-5 w-5" />
+                  User Uploaded Images
+                </CardTitle>
+                <CardDescription>
+                  How to view user uploaded screenshots
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ol className="list-decimal list-inside space-y-2 ml-4">
+                  <li>Go to the Supabase dashboard for your project</li>
+                  <li>Navigate to the Storage section in the left sidebar</li>
+                  <li>Find the "screenshots" bucket</li>
+                  <li>Browse through the folders (organized by user ID)</li>
+                  <li>You can also check the "screenshots" table in the Database section for file metadata</li>
+                </ol>
               </CardContent>
             </Card>
           </div>
