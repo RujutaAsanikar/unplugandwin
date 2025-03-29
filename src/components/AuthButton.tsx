@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import AuthModal from './AuthModal';
@@ -10,11 +10,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from '@/integrations/supabase/client';
 
 const AuthButton: React.FC = () => {
   const { user, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      const fetchUsername = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+          
+        if (!error && data) {
+          setUsername(data.username);
+        }
+      };
+      
+      fetchUsername();
+    } else {
+      setUsername(null);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -37,7 +59,7 @@ const AuthButton: React.FC = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2">
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline-block">My Account</span>
+              <span className="hidden sm:inline-block">{username || 'My Account'}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
