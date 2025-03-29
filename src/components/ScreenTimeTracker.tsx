@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Clock, Upload, Image as ImageIcon, X, AlertCircle, ImageOff, Trash2 } from 'lucide-react';
+import { Clock, Upload, Image as ImageIcon, X, AlertCircle, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
@@ -85,7 +85,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         });
         
         setScreenTimeEntries(formattedEntries);
-        setImageErrors({});
       }
     } catch (error) {
       console.error('Error fetching entries:', error);
@@ -98,7 +97,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       setIsLoading(false);
     }
   };
-  
+
   const refreshImageUrl = (entryId: string, url: string | undefined) => {
     if (!url) return;
     
@@ -453,31 +452,27 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                   >
                     <div className="relative aspect-video bg-gray-50">
                       {entry.screenshotUrl ? (
-                        <>
-                          {!imageErrors[entry.id] ? (
-                            <img
-                              src={`${entry.screenshotUrl}&v=${imageRefreshKeys[entry.id] || Date.now()}`}
-                              alt={`Screenshot from ${entry.date}`}
-                              className="w-full h-full object-contain bg-gray-50"
-                              onError={() => handleImageError(entry.id)}
-                              crossOrigin="anonymous"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                              <ImageOff className="w-8 h-8 mb-2" />
-                              <p className="text-xs text-center">Image could not be loaded</p>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="mt-2"
-                                onClick={() => retryLoadImage(entry.id, entry.screenshotUrl)}
-                              >
-                                Retry
-                              </Button>
+                        <div className="w-full h-full relative">
+                          <img
+                            src={`${entry.screenshotUrl}&t=${Date.now()}`}
+                            alt={`Screenshot from ${entry.date}`}
+                            className="w-full h-full object-contain bg-gray-50"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling!.style.display = 'flex';
+                            }}
+                            loading="lazy"
+                          />
+                          <div 
+                            className="w-full h-full flex-col items-center justify-center text-gray-400 hidden"
+                            style={{display: 'none'}}
+                          >
+                            <div className="w-full h-full flex flex-col items-center justify-center">
+                              <ImageIcon className="w-8 h-8 mb-2" />
+                              <p className="text-sm text-center px-4">Image not available</p>
                             </div>
-                          )}
-                        </>
+                          </div>
+                        </div>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Clock className="w-8 h-8 text-gray-300" />
@@ -494,10 +489,10 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                     </div>
                     
                     <div className="p-3">
-                      <time className="text-xs text-gray-500 block">
+                      <time className="text-sm text-gray-700 font-medium block">
                         {new Date(entry.date).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
+                          weekday: 'long', 
+                          month: 'long', 
                           day: 'numeric' 
                         })}
                       </time>
