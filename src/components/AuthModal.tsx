@@ -133,6 +133,16 @@ const AuthModal: React.FC<AuthModalProps> = ({
         response = await signIn(trimmedEmail, password);
       } else {
         response = await signUp(trimmedEmail, password, trimmedUsername);
+        
+        // If signup was successful but no user yet (email verification needed)
+        if (!response.error && !response.data.session) {
+          toast({
+            title: "Sign up successful",
+            description: "Please check your email for a confirmation link!",
+          });
+          // Automatically close the modal after successful signup
+          onClose();
+        }
       }
       
       if (response.error) {
