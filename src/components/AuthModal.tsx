@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle, User } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -24,10 +24,12 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [generalError, setGeneralError] = useState('');
   const { toast } = useToast();
   
@@ -51,8 +53,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (!isOpen) {
       setEmail('');
       setPassword('');
+      setUsername('');
       setEmailError('');
       setPasswordError('');
+      setUsernameError('');
       setGeneralError('');
       setIsSubmitting(false);
     }
@@ -85,20 +89,38 @@ const AuthModal: React.FC<AuthModalProps> = ({
     return true;
   };
 
+  const validateUsername = (username: string): boolean => {
+    if (mode === 'signup') {
+      const trimmedUsername = username.trim();
+      if (!trimmedUsername) {
+        setUsernameError('Username is required');
+        return false;
+      } else if (trimmedUsername.length < 3) {
+        setUsernameError('Username must be at least 3 characters long');
+        return false;
+      }
+      setUsernameError('');
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Reset errors
     setEmailError('');
     setPasswordError('');
+    setUsernameError('');
     setGeneralError('');
     
     // Validate inputs
     const trimmedEmail = email.trim();
+    const trimmedUsername = username.trim();
     const isEmailValid = validateEmail(trimmedEmail);
     const isPasswordValid = validatePassword(password);
+    const isUsernameValid = validateUsername(trimmedUsername);
     
-    if (!isEmailValid || !isPasswordValid) {
+    if (!isEmailValid || !isPasswordValid || (mode === 'signup' && !isUsernameValid)) {
       return;
     }
     
@@ -110,7 +132,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
       if (mode === 'login') {
         response = await signIn(trimmedEmail, password);
       } else {
-        response = await signUp(trimmedEmail, password);
+        response = await signUp(trimmedEmail, password, trimmedUsername);
       }
       
       if (response.error) {
@@ -128,6 +150,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     setMode(mode === 'login' ? 'signup' : 'login');
     setEmailError('');
     setPasswordError('');
+    setUsernameError('');
     setGeneralError('');
   };
 
@@ -174,6 +197,30 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             {emailError && <p className="text-sm text-red-500 mt-1">{emailError}</p>}
           </div>
+          
+          {mode === 'signup' && (
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (usernameError) validateUsername(e.target.value);
+                  }}
+                  onBlur={() => validateUsername(username)}
+                  className={`pl-10 ${usernameError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  placeholder="Your username"
+                  required
+                  autoComplete="username"
+                />
+              </div>
+              {usernameError && <p className="text-sm text-red-500 mt-1">{usernameError}</p>}
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>

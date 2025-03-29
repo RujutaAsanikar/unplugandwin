@@ -12,7 +12,7 @@ interface AuthContextType {
     error: Error | null;
     data: { user: User | null; session: Session | null };
   }>;
-  signUp: (email: string, password: string) => Promise<{
+  signUp: (email: string, password: string, username?: string) => Promise<{
     error: Error | null;
     data: { user: User | null; session: Session | null };
   }>;
@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, username?: string) => {
     try {
       console.log("Attempting to sign up with:", email);
       
@@ -131,12 +131,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Make sure we're using proper email formatting
       email = email.trim().toLowerCase();
       
+      // Add username to user metadata if provided
+      const options: {
+        emailRedirectTo: string;
+        data?: { username: string }
+      } = {
+        emailRedirectTo: window.location.origin
+      };
+
+      if (username) {
+        options.data = { username };
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: window.location.origin,
-        }
+        options
       });
       
       if (error) {

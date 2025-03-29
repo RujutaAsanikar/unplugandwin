@@ -13,6 +13,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 interface CompletedChallenge {
   userId: string;
   userEmail: string;
+  username: string;
   completionDate: string;
   screenshotCount: number;
 }
@@ -89,6 +90,13 @@ const AdminPage = () => {
           // Get user details
           const { data: userDetails } = await supabase.auth.admin.getUserById(userId);
           
+          // Get user profile for username
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', userId)
+            .single();
+            
           // Get user's screenshots count
           const { count: screenshotCount } = await supabase
             .from('screen_time_entries')
@@ -111,6 +119,7 @@ const AdminPage = () => {
           return {
             userId,
             userEmail: userDetails?.user?.email || 'Unknown User',
+            username: profileData?.username || userDetails?.user?.email?.split('@')[0] || 'Unknown User',
             completionDate,
             screenshotCount: screenshotCount || 0
           };
@@ -225,7 +234,7 @@ const AdminPage = () => {
                         <TableRow key={challenge.userId}>
                           <TableCell className="flex items-center">
                             <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {challenge.userEmail}
+                            {challenge.username}
                           </TableCell>
                           <TableCell>{challenge.completionDate}</TableCell>
                           <TableCell>{challenge.screenshotCount}</TableCell>
