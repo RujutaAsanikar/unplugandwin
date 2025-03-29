@@ -23,11 +23,6 @@ export const supabase = createClient<Database>(
         'Pragma': 'no-cache',
         'Expires': '0',
       },
-    },
-    storage: {
-      // Improve storage client defaults
-      retryAttempts: 3,
-      retryInterval: 1000
     }
   }
 );

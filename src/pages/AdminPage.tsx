@@ -71,8 +71,10 @@ const AdminPage = () => {
       
       if (entryCounts) {
         entryCounts.forEach(entry => {
-          const userId = entry.user_id;
-          userEntryCount.set(userId, (userEntryCount.get(userId) || 0) + 1);
+          if (entry && typeof entry === 'object' && 'user_id' in entry) {
+            const userId = entry.user_id as string;
+            userEntryCount.set(userId, (userEntryCount.get(userId) || 0) + 1);
+          }
         });
       }
       
@@ -90,20 +92,25 @@ const AdminPage = () => {
           const { count: screenshotCount } = await supabase
             .from('screen_time_entries')
             .select('id', { count: 'exact' })
-            .eq('user_id', userId);
+            .eq('user_id', userId as string);
             
           // Get user's most recent entry date
           const { data: latestEntryData } = await supabase
             .from('screen_time_entries')
             .select('created_at')
-            .eq('user_id', userId)
+            .eq('user_id', userId as string)
             .order('created_at', { ascending: false })
             .limit(1);
+            
+          let completionDate = 'Unknown';
+          if (latestEntryData && latestEntryData[0] && latestEntryData[0].created_at) {
+            completionDate = new Date(latestEntryData[0].created_at).toLocaleDateString();
+          }
             
           return {
             userId,
             userEmail: userDetails?.user?.email || 'Unknown User',
-            completionDate: latestEntryData && latestEntryData[0] ? new Date(latestEntryData[0].created_at).toLocaleDateString() : 'Unknown',
+            completionDate,
             screenshotCount: screenshotCount || 0
           };
         }));

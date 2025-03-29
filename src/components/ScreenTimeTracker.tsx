@@ -65,7 +65,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           hours,
           screenshots (id, storage_path)
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', user.id as string)
         .order('date', { ascending: false });
         
       if (error) throw error;
@@ -152,7 +152,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         const { error } = await supabase
           .from('screen_time_entries')
           .update({ hours })
-          .eq('id', existingEntry.id);
+          .eq('id', existingEntry.id as string);
           
         if (error) throw error;
         
@@ -160,21 +160,21 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           const { data: existingScreenshots } = await supabase
             .from('screenshots')
             .select('id')
-            .eq('screen_time_entry_id', existingEntry.id);
+            .eq('screen_time_entry_id', existingEntry.id as string);
             
           if (existingScreenshots && existingScreenshots.length > 0) {
             await supabase
               .from('screenshots')
               .delete()
-              .eq('screen_time_entry_id', existingEntry.id);
+              .eq('screen_time_entry_id', existingEntry.id as string);
           }
           
           const { error: screenshotError } = await supabase
             .from('screenshots')
             .insert({
-              screen_time_entry_id: existingEntry.id,
+              screen_time_entry_id: existingEntry.id as string,
               storage_path: selectedImage
-            });
+            } as any);
             
           if (screenshotError) throw screenshotError;
         }
@@ -208,22 +208,22 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         const { data, error } = await supabase
           .from('screen_time_entries')
           .insert({
-            user_id: user.id,
+            user_id: user.id as string,
             date: selectedDate,
             hours
-          })
+          } as any)
           .select('id')
           .single();
           
         if (error) throw error;
         
-        if (selectedImage && data.id) {
+        if (selectedImage && data?.id) {
           const { error: screenshotError } = await supabase
             .from('screenshots')
             .insert({
-              screen_time_entry_id: data.id,
+              screen_time_entry_id: data.id as string,
               storage_path: selectedImage
-            });
+            } as any);
             
           if (screenshotError) throw screenshotError;
         }
@@ -235,7 +235,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         }
         
         const newEntry: ScreenTimeEntry = {
-          id: data.id,
+          id: data.id as string,
           date: selectedDate,
           minutes,
           screenshotUrl: screenshotUrlWithCache
@@ -251,9 +251,9 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         }
       }
       
-      const updatedProgress = await updateChallengeProgress(user.id);
+      const updatedProgress = await updateChallengeProgress(user.id as string);
       
-      const earnedPoints = await getPointsFromProgress(user.id);
+      const earnedPoints = await getPointsFromProgress(user.id as string);
       
       if (onPointsEarned) {
         onPointsEarned(earnedPoints);
@@ -296,19 +296,21 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     if (!user || !entryToDelete) return;
     
     try {
-      const { data: entryData } = await supabase
+      const { data: entryData, error: entryError } = await supabase
         .from('screen_time_entries')
         .select(`
           id,
           screenshots (id, storage_path)
         `)
-        .eq('id', entryToDelete)
+        .eq('id', entryToDelete as string)
         .single();
+      
+      if (entryError) throw entryError;
       
       const { error } = await supabase
         .from('screen_time_entries')
         .delete()
-        .eq('id', entryToDelete);
+        .eq('id', entryToDelete as string);
         
       if (error) throw error;
       
@@ -326,8 +328,8 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         description: "The social media screen time entry has been removed",
       });
       
-      const updatedProgress = await updateChallengeProgress(user.id);
-      const earnedPoints = await getPointsFromProgress(user.id);
+      const updatedProgress = await updateChallengeProgress(user.id as string);
+      const earnedPoints = await getPointsFromProgress(user.id as string);
       
       if (onPointsEarned) {
         onPointsEarned(earnedPoints);
@@ -470,7 +472,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                             alt={`Screenshot from ${entry.date}`}
                             className="w-full h-full object-contain bg-gray-50"
                             onError={(e) => {
-                              // Use HTMLImageElement for proper typing
                               const imgElement = e.currentTarget as HTMLImageElement;
                               imgElement.style.display = 'none';
                               const nextElement = imgElement.nextElementSibling as HTMLDivElement;
