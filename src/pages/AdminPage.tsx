@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, User, AlertTriangle, Image } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Shield, User, AlertTriangle, Image, ListFilter, FileSpreadsheet } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 interface CompletedChallenge {
   userId: string;
@@ -18,11 +20,25 @@ interface CompletedChallenge {
   screenshotCount: number;
 }
 
+interface UserSurvey {
+  userId: string;
+  username: string;
+  name: string | null;
+  age: string | null;
+  dailyScreenTime: string | null;
+  socialMediaPlatforms: string[] | null;
+  deviceAccess: string | null;
+  areasOfConcern: string[] | null;
+  preferredRewards: string[] | null;
+}
+
 const AdminPage = () => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [completedChallenges, setCompletedChallenges] = useState<CompletedChallenge[]>([]);
+  const [userSurveys, setUserSurveys] = useState<UserSurvey[]>([]);
+  const [activeTab, setActiveTab] = useState('challenges');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,7 +56,10 @@ const AdminPage = () => {
         setIsAdmin(!!data);
         
         if (data) {
-          await fetchCompletedChallenges();
+          await Promise.all([
+            fetchCompletedChallenges(),
+            fetchUserSurveys()
+          ]);
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
@@ -60,7 +79,6 @@ const AdminPage = () => {
   const fetchCompletedChallenges = async () => {
     try {
       // Get users who have 30 or more entries
-      // Use count instead of group since group is not available
       const { data: entryCounts, error: countError } = await supabase
         .from('screen_time_entries')
         .select('user_id, id')
@@ -140,14 +158,75 @@ const AdminPage = () => {
     }
   };
 
+  const fetchUserSurveys = async () => {
+    try {
+      // Get all survey responses
+      const { data: surveyData, error: surveyError } = await supabase
+        .from('user_surveys')
+        .select('user_id, name, age, daily_screen_time, social_media_platforms, device_access, areas_of_concern, preferred_rewards');
+
+      if (surveyError) throw surveyError;
+
+      if (surveyData && surveyData.length > 0) {
+        const surveyResults = await Promise.all(surveyData.map(async (survey) => {
+          // Get user profile for username
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', survey.user_id)
+            .single();
+
+          // Use the username from profile data if available
+          const username = profileData?.username || 'Unknown User';
+            
+          return {
+            userId: survey.user_id,
+            username,
+            name: survey.name,
+            age: survey.age,
+            dailyScreenTime: survey.daily_screen_time,
+            socialMediaPlatforms: survey.social_media_platforms,
+            deviceAccess: survey.device_access,
+            areasOfConcern: survey.areas_of_concern,
+            preferredRewards: survey.preferred_rewards
+          };
+        }));
+        
+        setUserSurveys(surveyResults);
+      }
+    } catch (error) {
+      console.error('Error fetching user surveys:', error);
+      toast({
+        title: 'Error fetching user surveys',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleRefresh = () => {
     if (isAdmin) {
       fetchCompletedChallenges();
+      fetchUserSurveys();
       toast({
         title: 'Refreshing data',
-        description: 'Getting the latest challenge completion data.',
+        description: 'Getting the latest user data.',
       });
     }
+  };
+
+  const renderArrayAsBadges = (arr: string[] | null) => {
+    if (!arr || arr.length === 0) return <span className="text-muted-foreground">None</span>;
+    
+    return (
+      <div className="flex flex-wrap gap-1">
+        {arr.map((item, index) => (
+          <Badge key={index} variant="outline" className="text-xs">
+            {item}
+          </Badge>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -158,7 +237,7 @@ const AdminPage = () => {
       transition={{ duration: 0.6 }}
     >
       <Header activeTab="Dashboard" />
-      <main className="container max-w-4xl mx-auto py-8 pb-20 px-4">
+      <main className="container max-w-6xl mx-auto py-8 pb-20 px-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -211,43 +290,105 @@ const AdminPage = () => {
               </Button>
             </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Challenge Completions</CardTitle>
-                <CardDescription>
-                  Users who have completed the 30-day screenshot challenge
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {completedChallenges.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    No users have completed the challenge yet.
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Completion Date</TableHead>
-                        <TableHead>Screenshots</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {completedChallenges.map((challenge) => (
-                        <TableRow key={challenge.userId}>
-                          <TableCell className="flex items-center">
-                            <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {challenge.username}
-                          </TableCell>
-                          <TableCell>{challenge.completionDate}</TableCell>
-                          <TableCell>{challenge.screenshotCount}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="challenges" className="flex items-center">
+                  <ListFilter className="mr-2 h-4 w-4" />
+                  Challenge Completions
+                </TabsTrigger>
+                <TabsTrigger value="surveys" className="flex items-center">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  User Surveys
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="challenges">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Challenge Completions</CardTitle>
+                    <CardDescription>
+                      Users who have completed the 30-day screenshot challenge
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {completedChallenges.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        No users have completed the challenge yet.
+                      </p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Completion Date</TableHead>
+                            <TableHead>Screenshots</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {completedChallenges.map((challenge) => (
+                            <TableRow key={challenge.userId}>
+                              <TableCell className="flex items-center">
+                                <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                                {challenge.username}
+                              </TableCell>
+                              <TableCell>{challenge.userEmail}</TableCell>
+                              <TableCell>{challenge.completionDate}</TableCell>
+                              <TableCell>{challenge.screenshotCount}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="surveys">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Surveys</CardTitle>
+                    <CardDescription>
+                      User survey responses for the digital detox program
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {userSurveys.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        No survey responses have been submitted yet.
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>User</TableHead>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Age</TableHead>
+                              <TableHead>Daily Screen Time</TableHead>
+                              <TableHead>Social Media</TableHead>
+                              <TableHead>Areas of Concern</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {userSurveys.map((survey) => (
+                              <TableRow key={survey.userId}>
+                                <TableCell className="font-medium">{survey.username}</TableCell>
+                                <TableCell>{survey.name || '-'}</TableCell>
+                                <TableCell>{survey.age || '-'}</TableCell>
+                                <TableCell>{survey.dailyScreenTime || '-'}</TableCell>
+                                <TableCell>{renderArrayAsBadges(survey.socialMediaPlatforms)}</TableCell>
+                                <TableCell>{renderArrayAsBadges(survey.areasOfConcern)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
 
             <Card>
               <CardHeader>
