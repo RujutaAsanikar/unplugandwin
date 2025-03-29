@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
-import { Sparkles, Trophy, Award, PartyPopper } from 'lucide-react';
+import { Sparkles, Trophy, Award, PartyPopper, X } from 'lucide-react';
 
 interface ConfettiOverlayProps {
   isVisible: boolean;
@@ -84,12 +84,21 @@ const ConfettiOverlay: React.FC<ConfettiOverlayProps> = ({ isVisible, onClose })
       onClick={onClose}
     >
       <motion.div 
-        className="bg-white rounded-xl p-8 max-w-md mx-auto text-center shadow-lg border border-primary/20"
+        className="bg-white rounded-xl p-8 max-w-md mx-auto text-center shadow-lg border border-primary/20 relative"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", duration: 0.5 }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close button */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5 text-gray-400" />
+        </button>
+        
         <div className="mb-4 flex justify-center">
           <div className="relative">
             <div className="absolute -top-3 -left-3">
