@@ -1,10 +1,11 @@
+
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, getPublicUrl } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -95,20 +96,18 @@ const UploadModal: React.FC<UploadModalProps> = ({
       
       // Get the public URL with correct CORS settings and cache busting
       const timestamp = Date.now();
-      const { data: { publicUrl } } = supabase.storage
-        .from('screenshots')
-        .getPublicUrl(filePath);
-        
-      // Add a timestamp parameter to force fresh load
-      const publicUrlWithTimestamp = `${publicUrl}?t=${timestamp}`;
+      const publicUrl = getPublicUrl('screenshots', filePath);
       
-      console.log('Uploaded image URL:', publicUrlWithTimestamp);
+      console.log('Uploaded image URL:', publicUrl);
       
       // Preload the image to ensure it loads properly
-      await preloadImage(publicUrlWithTimestamp);
+      const preloaded = await preloadImage(publicUrl);
+      if (!preloaded) {
+        console.warn("Image preloading failed, but continuing with upload");
+      }
       
-      // Return the full public URL with required parameters
-      return publicUrlWithTimestamp;
+      // Return the full public URL
+      return filePath;
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
@@ -206,10 +205,15 @@ const UploadModal: React.FC<UploadModalProps> = ({
       return;
     }
     
-    const imageUrl = await uploadToSupabase();
+    const imageFilePath = await uploadToSupabase();
     
-    if (imageUrl) {
-      onUpload(imageUrl);
+    if (imageFilePath) {
+      onUpload(imageFilePath);
+      
+      toast({
+        title: "Upload successful",
+        description: "Your screenshot has been uploaded successfully",
+      });
       
       // After successful upload, reset the state
       setPreview(null);
@@ -286,8 +290,8 @@ const UploadModal: React.FC<UploadModalProps> = ({
                 transition={{ duration: 0.2 }}
                 className="relative"
               >
-                <div className="rounded-lg overflow-hidden aspect-video bg-gray-100">
-                  <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                <div className="rounded-lg overflow-hidden aspect-video bg-gray-50">
+                  <img src={preview} alt="Preview" className="w-full h-full object-contain" />
                 </div>
                 <Button
                   size="icon"

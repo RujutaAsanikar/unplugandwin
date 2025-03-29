@@ -23,6 +23,11 @@ export const supabase = createClient<Database>(
         'Pragma': 'no-cache',
         'Expires': '0',
       },
+    },
+    storage: {
+      // Improve storage client defaults
+      retryAttempts: 3,
+      retryInterval: 1000
     }
   }
 );
@@ -32,4 +37,14 @@ export const getPublicUrl = (bucketName: string, filePath: string) => {
   const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
   const timestamp = Date.now();
   return `${data.publicUrl}?t=${timestamp}`;
+};
+
+// Helper function to check if a file exists in storage
+export const fileExists = async (bucketName: string, filePath: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.storage.from(bucketName).download(filePath);
+    return !error && !!data;
+  } catch {
+    return false;
+  }
 };

@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { updateChallengeProgress, getPointsFromProgress } from '@/lib/challengeManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/lib/auth';
-import { supabase, getPublicUrl } from '@/integrations/supabase/client';
+import { supabase, getPublicUrl, fileExists } from '@/integrations/supabase/client';
 import AuthModal from './AuthModal';
 import {
   AlertDialog,
@@ -43,12 +43,13 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (user) {
       fetchEntries();
     }
-  }, [user]);
+  }, [user, refreshTrigger]);
 
   const fetchEntries = async () => {
     if (!user) return;
@@ -70,11 +71,17 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       if (error) throw error;
       
       if (data) {
-        const formattedEntries: ScreenTimeEntry[] = data.map(entry => {
+        const formattedEntries: ScreenTimeEntry[] = await Promise.all(data.map(async entry => {
           let screenshotUrl = null;
           
           if (entry.screenshots && entry.screenshots.length > 0) {
-            screenshotUrl = getPublicUrl('screenshots', entry.screenshots[0].storage_path);
+            const path = entry.screenshots[0].storage_path;
+            // Verify the file actually exists in storage
+            const exists = await fileExists('screenshots', path);
+            
+            if (exists) {
+              screenshotUrl = getPublicUrl('screenshots', path);
+            }
           }
           
           return {
@@ -83,7 +90,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
             minutes: Math.round(entry.hours * 60),
             screenshotUrl
           };
-        });
+        }));
         
         setScreenTimeEntries(formattedEntries);
       }
@@ -259,6 +266,10 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         title: "Social media time saved",
         description: `You've recorded ${minutes} minutes for ${new Date(selectedDate).toLocaleDateString()}`,
       });
+      
+      // Refresh the entries to ensure we're showing the most up-to-date data
+      setRefreshTrigger(prev => prev + 1);
+      
     } catch (error) {
       console.error('Error adding entry:', error);
       toast({
@@ -455,18 +466,18 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                       {entry.screenshotUrl ? (
                         <div className="w-full h-full relative">
                           <img
-                            src={`${entry.screenshotUrl}&t=${Date.now()}`}
+                            src={`${entry.screenshotUrl}&t=${imageRefreshKeys[entry.id] || Date.now()}`}
                             alt={`Screenshot from ${entry.date}`}
                             className="w-full h-full object-contain bg-gray-50"
                             onError={(e) => {
-                              // Fix: Use HTMLImageElement instead of Element
+                              // Use HTMLImageElement for proper typing
                               const imgElement = e.currentTarget as HTMLImageElement;
                               imgElement.style.display = 'none';
-                              // Use optional chaining with type assertion for nextElementSibling
                               const nextElement = imgElement.nextElementSibling as HTMLDivElement;
                               if (nextElement) {
                                 nextElement.style.display = 'flex';
                               }
+                              handleImageError(entry.id);
                             }}
                             loading="lazy"
                           />
@@ -476,6 +487,16 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                             <div className="w-full h-full flex flex-col items-center justify-center">
                               <ImageIcon className="w-8 h-8 mb-2" />
                               <p className="text-sm text-center px-4">Image not available</p>
+                              {imageErrors[entry.id] && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-2"
+                                  onClick={() => retryLoadImage(entry.id, entry.screenshotUrl)}
+                                >
+                                  Try Again
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </div>
