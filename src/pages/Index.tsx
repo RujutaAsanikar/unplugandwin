@@ -9,13 +9,24 @@ import { Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
-import { isChallengeStarted, startChallenge, updateChallengeProgress } from '@/lib/challengeManager';
+import { 
+  isChallengeStarted, 
+  startChallenge, 
+  updateChallengeProgress, 
+  getEntriesCount,
+  isJustCompleted
+} from '@/lib/challengeManager';
+import ConfettiOverlay from '@/components/ConfettiOverlay';
+import { useAuth } from '@/lib/auth';
 
 const Index = () => {
   const [points, setPoints] = useState(getUserPoints());
   const [showTerms, setShowTerms] = useState(false);
   const [challengeStarted, setChallengeStarted] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [challengeProgress, setChallengeProgress] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const savedChallengeStarted = isChallengeStarted();
@@ -23,11 +34,33 @@ const Index = () => {
     
     if (savedChallengeStarted) {
       // If challenge is already started, update the progress
-      updateChallengeProgress();
+      checkProgress();
     }
     
     setPoints(getUserPoints());
   }, []);
+
+  const checkProgress = async () => {
+    const previousProgress = Number(localStorage.getItem('challengeProgress') || '0');
+    const updatedProgress = await updateChallengeProgress(user?.id);
+    setChallengeProgress(updatedProgress);
+    
+    // Check if the challenge was just completed
+    if (isJustCompleted(previousProgress, updatedProgress)) {
+      setShowConfetti(true);
+    }
+    
+    // Check for completion even if it happened earlier
+    const entriesCount = await getEntriesCount(user?.id);
+    if (entriesCount >= 30 && updatedProgress === 100) {
+      // For users who may have refreshed after completing
+      const hasSeenCompletionCelebration = localStorage.getItem('hasSeenCompletionCelebration');
+      if (hasSeenCompletionCelebration !== 'true') {
+        setShowConfetti(true);
+        localStorage.setItem('hasSeenCompletionCelebration', 'true');
+      }
+    }
+  };
 
   useEffect(() => {
     saveUserPoints(points);
@@ -38,6 +71,9 @@ const Index = () => {
       ...prev,
       current: earnedPoints // Use the exact earned points from progress
     }));
+    
+    // Re-check progress when points are updated
+    checkProgress();
   };
 
   const handleStartChallenge = () => {
@@ -54,6 +90,11 @@ const Index = () => {
       title: "Challenge started!",
       description: "You've successfully started the 30-day social media reduction challenge",
     });
+  };
+
+  const handleCloseConfetti = () => {
+    setShowConfetti(false);
+    localStorage.setItem('hasSeenCompletionCelebration', 'true');
   };
 
   const containerVariants = {
@@ -121,6 +162,11 @@ const Index = () => {
           onClose={() => setShowTerms(false)} 
           onAccept={handleAcceptTerms}
           challengeName="Digital Detox Month"
+        />
+        
+        <ConfettiOverlay 
+          isVisible={showConfetti} 
+          onClose={handleCloseConfetti}
         />
       </main>
     </motion.div>

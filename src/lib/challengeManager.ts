@@ -65,7 +65,7 @@ export const getEntriesCount = async (userId?: string): Promise<number> => {
       const { data, error } = await supabase
         .from('screen_time_entries')
         .select('id')
-        .eq('user_id', userId as string);
+        .eq('user_id', userId);
         
       if (error) throw error;
       return data?.length || 0;
@@ -130,7 +130,7 @@ export const recordChallengeCompletion = async (userId: string): Promise<void> =
     const { data: existingData } = await supabase
       .from('admin_users')
       .select('id')
-      .eq('user_id', userId as string)
+      .eq('user_id', userId)
       .single();
       
     if (!existingData) {
