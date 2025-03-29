@@ -102,7 +102,7 @@ export const updateChallengeProgress = async (userId?: string): Promise<number> 
   saveChallengeProgress(newProgress);
   
   // Update points based on progress (1000 points per screenshot)
-  if (entriesCount > 0) {
+  if (entriesCount >= 0) {
     // Update points - 1000 points per screenshot
     const currentPoints = JSON.parse(localStorage.getItem('userPoints') || '{"current":0,"target":30000}');
     const newPoints = Math.min(entriesCount * 1000, 30000);

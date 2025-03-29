@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Clock, Upload, Image as ImageIcon, X, AlertCircle, ImageOff } from 'lucide-react';
+import { Clock, Upload, Image as ImageIcon, X, AlertCircle, ImageOff, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenTimeGraph from './ScreenTimeGraph';
 import UploadModal from './UploadModal';
@@ -10,8 +10,18 @@ import { useToast } from '@/components/ui/use-toast';
 import { updateChallengeProgress, getPointsFromProgress } from '@/lib/challengeManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, getPublicUrl } from '@/integrations/supabase/client';
 import AuthModal from './AuthModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ScreenTimeTrackerProps {
   onPointsEarned?: (points: number) => void;
@@ -27,6 +37,8 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const [isLoading, setIsLoading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [imageRefreshKeys, setImageRefreshKeys] = useState<Record<string, number>>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -61,12 +73,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           let screenshotUrl = null;
           
           if (entry.screenshots && entry.screenshots.length > 0) {
-            const timestamp = Date.now();
-            const { data: { publicUrl } } = supabase.storage
-              .from('screenshots')
-              .getPublicUrl(entry.screenshots[0].storage_path);
-            
-            screenshotUrl = `${publicUrl}?t=${timestamp}`;
+            screenshotUrl = getPublicUrl('screenshots', entry.screenshots[0].storage_path);
           }
           
           return {
@@ -78,7 +85,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         });
         
         setScreenTimeEntries(formattedEntries);
-        
         setImageErrors({});
       }
     } catch (error) {
@@ -166,17 +172,13 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           if (screenshotError) throw screenshotError;
         }
         
-        const timestamp = Date.now();
         let screenshotUrlWithCache = null;
         
         if (selectedImage) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('screenshots')
-            .getPublicUrl(selectedImage);
-          
-          screenshotUrlWithCache = `${publicUrl}?t=${timestamp}`;
+          screenshotUrlWithCache = getPublicUrl('screenshots', selectedImage);
         } else if (existingEntry.screenshotUrl) {
           const baseUrl = existingEntry.screenshotUrl.split('?')[0];
+          const timestamp = Date.now();
           screenshotUrlWithCache = `${baseUrl}?t=${timestamp}`;
         }
         
@@ -192,7 +194,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         if (screenshotUrlWithCache) {
           setImageRefreshKeys(prev => ({
             ...prev,
-            [existingEntry.id]: timestamp
+            [existingEntry.id]: Date.now()
           }));
         }
       } else {
@@ -220,14 +222,9 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         }
         
         let screenshotUrlWithCache = null;
-        const timestamp = Date.now();
         
         if (selectedImage) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('screenshots')
-            .getPublicUrl(selectedImage);
-          
-          screenshotUrlWithCache = `${publicUrl}?t=${timestamp}`;
+          screenshotUrlWithCache = getPublicUrl('screenshots', selectedImage);
         }
         
         const newEntry: ScreenTimeEntry = {
@@ -242,17 +239,17 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         if (screenshotUrlWithCache) {
           setImageRefreshKeys(prev => ({
             ...prev,
-            [data.id]: timestamp
+            [data.id]: Date.now()
           }));
         }
-        
-        const updatedProgress = await updateChallengeProgress(user.id);
-        
-        const earnedPoints = await getPointsFromProgress(user.id);
-        
-        if (onPointsEarned) {
-          onPointsEarned(earnedPoints);
-        }
+      }
+      
+      const updatedProgress = await updateChallengeProgress(user.id);
+      
+      const earnedPoints = await getPointsFromProgress(user.id);
+      
+      if (onPointsEarned) {
+        onPointsEarned(earnedPoints);
       }
 
       setSelectedImage(null);
@@ -279,23 +276,51 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     setTimeInputModalOpen(true);
   };
 
-  const handleDeleteEntry = async (id: string) => {
-    if (!user) return;
+  const confirmDeleteEntry = (id: string) => {
+    setEntryToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteEntry = async () => {
+    if (!user || !entryToDelete) return;
     
     try {
+      const { data: entryData } = await supabase
+        .from('screen_time_entries')
+        .select(`
+          id,
+          screenshots (id, storage_path)
+        `)
+        .eq('id', entryToDelete)
+        .single();
+      
       const { error } = await supabase
         .from('screen_time_entries')
         .delete()
-        .eq('id', id);
+        .eq('id', entryToDelete);
         
       if (error) throw error;
       
-      setScreenTimeEntries(screenTimeEntries.filter(entry => entry.id !== id));
+      if (entryData?.screenshots && entryData.screenshots.length > 0) {
+        const storagePath = entryData.screenshots[0].storage_path;
+        await supabase.storage
+          .from('screenshots')
+          .remove([storagePath]);
+      }
+      
+      setScreenTimeEntries(screenTimeEntries.filter(entry => entry.id !== entryToDelete));
       
       toast({
         title: "Entry deleted",
         description: "The social media screen time entry has been removed",
       });
+      
+      const updatedProgress = await updateChallengeProgress(user.id);
+      const earnedPoints = await getPointsFromProgress(user.id);
+      
+      if (onPointsEarned) {
+        onPointsEarned(earnedPoints);
+      }
     } catch (error) {
       console.error('Error deleting entry:', error);
       toast({
@@ -303,6 +328,9 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setEntryToDelete(null);
     }
   };
 
@@ -455,6 +483,14 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                           <Clock className="w-8 h-8 text-gray-300" />
                         </div>
                       )}
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500/80 hover:bg-red-600 text-white"
+                        onClick={() => confirmDeleteEntry(entry.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                     
                     <div className="p-3">
@@ -498,6 +534,23 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         onClose={() => setAuthModalOpen(false)}
         defaultMode="signup"
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Screen Time Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this entry? This will also remove your progress and points for this entry.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEntry} className="bg-red-500 hover:bg-red-600 text-white">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

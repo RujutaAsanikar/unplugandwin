@@ -19,10 +19,17 @@ export const supabase = createClient<Database>(
     },
     global: {
       headers: {
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
       },
     }
   }
 );
+
+// Helper function to get a public URL with proper cache-busting
+export const getPublicUrl = (bucketName: string, filePath: string) => {
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+  const timestamp = Date.now();
+  return `${data.publicUrl}?t=${timestamp}`;
+};
