@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [imageRefreshKeys, setImageRefreshKeys] = useState<Record<string, number>>({});
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -58,31 +58,28 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       
       if (data) {
         const formattedEntries: ScreenTimeEntry[] = data.map(entry => {
-          // Add a cache-busting query parameter to the URL
-          let screenshotUrl = entry.screenshots && entry.screenshots.length > 0 
-            ? entry.screenshots[0].storage_path : undefined;
+          let screenshotUrl = null;
+          
+          if (entry.screenshots && entry.screenshots.length > 0) {
+            const timestamp = Date.now();
+            const { data: { publicUrl } } = supabase.storage
+              .from('screenshots')
+              .getPublicUrl(entry.screenshots[0].storage_path);
             
-          // Add a timestamp parameter to force fresh load
-          if (screenshotUrl) {
-            screenshotUrl = `${screenshotUrl}?t=${Date.now()}`;
+            screenshotUrl = `${publicUrl}?t=${timestamp}`;
           }
           
           return {
             id: entry.id,
             date: entry.date,
             minutes: Math.round(entry.hours * 60),
-            screenshotUrl: screenshotUrl
+            screenshotUrl
           };
         });
         
         setScreenTimeEntries(formattedEntries);
         
-        // Preload images to check for errors
-        formattedEntries.forEach(entry => {
-          if (entry.screenshotUrl) {
-            preloadImage(entry.id, entry.screenshotUrl);
-          }
-        });
+        setImageErrors({});
       }
     } catch (error) {
       console.error('Error fetching entries:', error);
@@ -96,26 +93,31 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     }
   };
   
-  // Function to preload and validate images
-  const preloadImage = (entryId: string, url: string) => {
-    const img = new Image();
-    img.onload = () => {
-      console.log(`Successfully loaded image for entry ${entryId}`);
-      setImageErrors(prev => {
-        const newErrors = {...prev};
-        delete newErrors[entryId];
-        return newErrors;
-      });
-    };
-    img.onerror = () => {
-      console.error(`Failed to load image for entry ${entryId}: ${url}`);
-      setImageErrors(prev => ({
-        ...prev,
-        [entryId]: true
-      }));
-    };
-    img.crossOrigin = "anonymous";
-    img.src = url;
+  const refreshImageUrl = (entryId: string, url: string | undefined) => {
+    if (!url) return;
+    
+    const baseUrl = url.split('?')[0];
+    const timestamp = Date.now();
+    const newUrl = `${baseUrl}?t=${timestamp}`;
+    
+    setImageRefreshKeys(prev => ({
+      ...prev,
+      [entryId]: timestamp
+    }));
+    
+    setScreenTimeEntries(prev => 
+      prev.map(entry => 
+        entry.id === entryId 
+          ? {...entry, screenshotUrl: newUrl} 
+          : entry
+      )
+    );
+    
+    setImageErrors(prev => {
+      const newErrors = {...prev};
+      delete newErrors[entryId];
+      return newErrors;
+    });
   };
 
   const handleAddEntry = async (minutes: number) => {
@@ -142,7 +144,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         if (error) throw error;
         
         if (selectedImage) {
-          // If there's an existing screenshot, delete it first
           const { data: existingScreenshots } = await supabase
             .from('screenshots')
             .select('id')
@@ -155,7 +156,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
               .eq('screen_time_entry_id', existingEntry.id);
           }
           
-          // Now insert the new screenshot
           const { error: screenshotError } = await supabase
             .from('screenshots')
             .insert({
@@ -166,9 +166,19 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           if (screenshotError) throw screenshotError;
         }
         
-        // Add cache-busting parameter to URL
-        const screenshotUrlWithCache = selectedImage ? 
-          `${selectedImage}?t=${Date.now()}` : existingEntry.screenshotUrl;
+        const timestamp = Date.now();
+        let screenshotUrlWithCache = null;
+        
+        if (selectedImage) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('screenshots')
+            .getPublicUrl(selectedImage);
+          
+          screenshotUrlWithCache = `${publicUrl}?t=${timestamp}`;
+        } else if (existingEntry.screenshotUrl) {
+          const baseUrl = existingEntry.screenshotUrl.split('?')[0];
+          screenshotUrlWithCache = `${baseUrl}?t=${timestamp}`;
+        }
         
         const updatedEntries = [...screenTimeEntries];
         updatedEntries[existingEntryIndex] = {
@@ -179,9 +189,11 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         
         setScreenTimeEntries(updatedEntries);
         
-        // Preload the new image
         if (screenshotUrlWithCache) {
-          preloadImage(existingEntry.id, screenshotUrlWithCache);
+          setImageRefreshKeys(prev => ({
+            ...prev,
+            [existingEntry.id]: timestamp
+          }));
         }
       } else {
         const { data, error } = await supabase
@@ -207,9 +219,16 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           if (screenshotError) throw screenshotError;
         }
         
-        // Add cache-busting parameter to URL
-        const screenshotUrlWithCache = selectedImage ? 
-          `${selectedImage}?t=${Date.now()}` : undefined;
+        let screenshotUrlWithCache = null;
+        const timestamp = Date.now();
+        
+        if (selectedImage) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('screenshots')
+            .getPublicUrl(selectedImage);
+          
+          screenshotUrlWithCache = `${publicUrl}?t=${timestamp}`;
+        }
         
         const newEntry: ScreenTimeEntry = {
           id: data.id,
@@ -220,18 +239,17 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         
         setScreenTimeEntries([newEntry, ...screenTimeEntries]);
         
-        // Preload the new image
         if (screenshotUrlWithCache) {
-          preloadImage(data.id, screenshotUrlWithCache);
+          setImageRefreshKeys(prev => ({
+            ...prev,
+            [data.id]: timestamp
+          }));
         }
         
-        // Update the challenge progress based on the new entry
         const updatedProgress = await updateChallengeProgress(user.id);
         
-        // Get the points from the progress
         const earnedPoints = await getPointsFromProgress(user.id);
         
-        // Notify parent component about earned points
         if (onPointsEarned) {
           onPointsEarned(earnedPoints);
         }
@@ -305,38 +323,11 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
     }));
   };
 
-  const retryLoadImage = (entryId: string, url: string) => {
+  const retryLoadImage = (entryId: string, url: string | undefined) => {
+    if (!url) return;
+    
     console.log(`Retrying image load for entry ${entryId}`);
-    
-    // Remove the error state first
-    setImageErrors(prev => {
-      const newErrors = {...prev};
-      delete newErrors[entryId];
-      return newErrors;
-    });
-    
-    // Force browser to reload image by adding a cache-busting parameter
-    const timestamp = Date.now();
-    let cacheBustUrl = url;
-    
-    // Add or update the timestamp parameter
-    if (url.includes('?')) {
-      cacheBustUrl = url.split('?')[0] + `?t=${timestamp}`;
-    } else {
-      cacheBustUrl = `${url}?t=${timestamp}`;
-    }
-    
-    // Try preloading the image
-    preloadImage(entryId, cacheBustUrl);
-    
-    // Update the entry with the new URL
-    setScreenTimeEntries(prev => 
-      prev.map(entry => 
-        entry.id === entryId 
-          ? {...entry, screenshotUrl: cacheBustUrl} 
-          : entry
-      )
-    );
+    refreshImageUrl(entryId, url);
   };
 
   const sortedEntries = [...screenTimeEntries].sort(
@@ -437,11 +428,12 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                         <>
                           {!imageErrors[entry.id] ? (
                             <img
-                              src={entry.screenshotUrl}
+                              src={`${entry.screenshotUrl}&v=${imageRefreshKeys[entry.id] || Date.now()}`}
                               alt={`Screenshot from ${entry.date}`}
                               className="w-full h-full object-contain bg-gray-50"
                               onError={() => handleImageError(entry.id)}
                               crossOrigin="anonymous"
+                              loading="lazy"
                             />
                           ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
@@ -451,7 +443,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
                                 size="sm" 
                                 variant="outline" 
                                 className="mt-2"
-                                onClick={() => entry.screenshotUrl && retryLoadImage(entry.id, entry.screenshotUrl)}
+                                onClick={() => retryLoadImage(entry.id, entry.screenshotUrl)}
                               >
                                 Retry
                               </Button>
