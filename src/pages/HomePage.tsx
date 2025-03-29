@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,7 @@ const HomePage = () => {
             variants={staggerContainer}
           >
             <motion.div variants={fadeInUp}>
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 purple-gradient-text">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 purple-gradient-text whitespace-nowrap">
                 UnplugAndWin
               </h1>
               <p className="text-lg md:text-xl text-gray-700 mb-8">
@@ -112,72 +113,7 @@ const HomePage = () => {
         </div>
       </section>
       
-      {/* Impact Areas */}
-      <section className="py-20 px-4 bg-gradient-to-r from-primary/80 to-primary">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">Impact Areas</h2>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-xl p-8 shadow-lg text-center"
-            >
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-4">Mental Health</h3>
-              <p className="text-gray-600">
-                Reducing screen time to lower stress and anxiety while enhancing emotional resilience
-              </p>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-xl p-8 shadow-lg text-center"
-            >
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Globe className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-4">Social Relationships</h3>
-              <p className="text-gray-600">
-                Building stronger in-person relationships and improving face-to-face communication skills
-              </p>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-xl p-8 shadow-lg text-center"
-            >
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <GraduationCap className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-4">Academic Performance</h3>
-              <p className="text-gray-600">
-                Enhancing focus, concentration, and time management by minimizing digital distractions
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Rewards Section */}
+      {/* Rewards Section - Moved up */}
       <section className="py-20 px-4 bg-gradient-to-r from-purple-50 to-purple-100">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -270,7 +206,7 @@ const HomePage = () => {
         </div>
       </section>
       
-      {/* Our Approach */}
+      {/* Our Approach - Second section as requested */}
       <section className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -366,6 +302,71 @@ const HomePage = () => {
                 </div>
               </motion.div>
             </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Impact Areas - Third section as requested */}
+      <section className="py-20 px-4 bg-gradient-to-r from-primary/80 to-primary">
+        <div className="container mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">Impact Areas</h2>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-xl p-8 shadow-lg text-center"
+            >
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Sparkles className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Mental Health</h3>
+              <p className="text-gray-600">
+                Reducing screen time to lower stress and anxiety while enhancing emotional resilience
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-xl p-8 shadow-lg text-center"
+            >
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Globe className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Social Relationships</h3>
+              <p className="text-gray-600">
+                Building stronger in-person relationships and improving face-to-face communication skills
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-xl p-8 shadow-lg text-center"
+            >
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <GraduationCap className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Academic Performance</h3>
+              <p className="text-gray-600">
+                Enhancing focus, concentration, and time management by minimizing digital distractions
+              </p>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -468,4 +469,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
