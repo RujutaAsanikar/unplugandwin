@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import SurveyForm from '@/components/SurveyForm';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,11 +10,28 @@ import { ArrowRight } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 const SurveyPage = () => {
   const [completed, setCompleted] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [surveyData, setSurveyData] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(true);
+  const isMobile = useMediaQuery("(max-width: 640px)");
   
   const handleSignUpClick = () => {
     setShowAuthModal(true);
@@ -116,58 +132,119 @@ const SurveyPage = () => {
     }
   };
   
+  const handleOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+  };
+
+  const renderSurveyContent = () => {
+    if (!completed) {
+      return (
+        <>
+          <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+            <div className="flex items-start gap-2">
+              <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+              <p className="text-sm text-blue-700">
+                <strong>Note:</strong> All questions are compulsory. Please complete all fields.
+              </p>
+            </div>
+          </div>
+          <SurveyForm onComplete={handleComplete} />
+        </>
+      );
+    } else {
+      return (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <h3 className="text-2xl font-bold text-primary mb-3">Survey Completed!</h3>
+          <p className="text-gray-600 mb-6">
+            Thank you for submitting your survey. Your responses have been recorded.
+          </p>
+          <p className="mb-6 text-gray-600">
+            Please create an account to track your digital detox progress and earn rewards.
+          </p>
+          <div className="flex justify-center">
+            <Button 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 font-medium rounded-full px-8"
+              onClick={handleSignUpClick}
+            >
+              Sign up now
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </motion.div>
+      );
+    }
+  };
+
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header activeTab="Home" />
+        <Drawer open={isDialogOpen} onOpenChange={handleOpenChange}>
+          <DrawerContent className="max-h-[90vh] overflow-y-auto">
+            <DrawerHeader>
+              <DrawerTitle className="text-center">UnplugAndWin Survey</DrawerTitle>
+              <DrawerDescription className="text-center">
+                Help us understand your needs to provide the best digital detox experience
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4 pb-8">
+              {renderSurveyContent()}
+            </div>
+          </DrawerContent>
+        </Drawer>
+        
+        <div className="container mx-auto max-w-4xl px-4 py-12 text-center">
+          <Button 
+            size="lg" 
+            className="bg-primary hover:bg-primary/90 font-medium rounded-full px-8"
+            onClick={() => setIsDialogOpen(true)}
+          >
+            Take Survey
+          </Button>
+        </div>
+
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={handleAuthModalClose}
+          defaultMode="signup"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header activeTab="Home" />
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="container mx-auto max-w-4xl px-4 py-8"
-      >
-        {!completed ? (
-          <Card className="border-0 shadow-sm rounded-2xl overflow-hidden bg-white">
-            <CardContent className="p-8 md:p-12">
-              <h1 className="text-3xl font-bold mb-2">UnplugAndWin Survey</h1>
-              <p className="text-gray-600 mb-6">
-                Help us understand your needs to provide the best digital detox experience
-              </p>
-              <SurveyForm onComplete={handleComplete} />
-            </CardContent>
-          </Card>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="w-full max-w-2xl mx-auto bg-white border-0 shadow-sm rounded-2xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-primary">Survey Completed!</CardTitle>
-                <CardDescription className="text-gray-600">
-                  Thank you for submitting your survey. Your responses have been recorded.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-center pb-8">
-                <p className="mb-6 text-gray-600">
-                  Please create an account to track your digital detox progress and earn rewards.
-                </p>
-                <div className="flex justify-center">
-                  <Button 
-                    size="lg" 
-                    className="bg-primary hover:bg-primary/90 font-medium rounded-full px-8"
-                    onClick={handleSignUpClick}
-                  >
-                    Sign up now
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </motion.div>
+      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">UnplugAndWin Survey</DialogTitle>
+            <DialogDescription className="text-center">
+              Help us understand your needs to provide the best digital detox experience
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-2 py-4">
+            {renderSurveyContent()}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      <div className="container mx-auto max-w-4xl px-4 py-12 text-center">
+        <Button 
+          size="lg" 
+          className="bg-primary hover:bg-primary/90 font-medium rounded-full px-8"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Take Survey
+        </Button>
+      </div>
       
       <AuthModal 
         isOpen={showAuthModal} 
