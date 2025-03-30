@@ -9,13 +9,111 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
+import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const SurveyPage = () => {
   const [completed, setCompleted] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [surveyData, setSurveyData] = useState(null);
   
   const handleSignUpClick = () => {
     setShowAuthModal(true);
+  };
+
+  const handleComplete = (data) => {
+    setSurveyData(data);
+    setCompleted(true);
+    
+    // Store survey data in local storage for later use
+    localStorage.setItem('surveyData', JSON.stringify(data));
+
+    // Attempt to save data to Supabase if user is already logged in
+    const saveDataToSupabase = async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          const { error } = await supabase.from('user_surveys').insert({
+            name: data.name,
+            age: data.age,
+            personal_phone: data.personal_phone,
+            parent_phone: data.parent_phone || null,
+            daily_screen_time: data.daily_screen_time,
+            social_media_platforms: data.social_media_platforms,
+            device_access: data.device_access,
+            areas_of_concern: data.areas_of_concern,
+            preferred_rewards: data.preferred_rewards,
+            user_id: authData.user.id
+          });
+          
+          if (error) {
+            console.error("Error saving survey:", error);
+            toast({
+              title: "Error Saving Data",
+              description: "There was a problem saving your survey data. Please try again.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Survey Saved",
+              description: "Your survey data has been saved successfully.",
+              variant: "default"
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking auth state:", error);
+      }
+    };
+    
+    saveDataToSupabase();
+  };
+  
+  // Handle saving data after user authenticates
+  const handleAuthModalClose = async () => {
+    setShowAuthModal(false);
+    
+    if (!surveyData) return;
+    
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user) {
+        const { error } = await supabase.from('user_surveys').insert({
+          name: surveyData.name,
+          age: surveyData.age,
+          personal_phone: surveyData.personal_phone,
+          parent_phone: surveyData.parent_phone || null,
+          daily_screen_time: surveyData.daily_screen_time,
+          social_media_platforms: surveyData.social_media_platforms,
+          device_access: surveyData.device_access,
+          areas_of_concern: surveyData.areas_of_concern,
+          preferred_rewards: surveyData.preferred_rewards,
+          user_id: authData.user.id
+        });
+        
+        if (error) {
+          console.error("Error saving survey after auth:", error);
+          toast({
+            title: "Error Saving Data",
+            description: "There was a problem saving your survey data. Please try again.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Survey Saved",
+            description: "Your survey data has been saved successfully.",
+            variant: "default"
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error saving survey after auth:", error);
+      toast({
+        title: "Error Saving Data",
+        description: "There was a problem saving your survey data. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   return (
@@ -36,7 +134,7 @@ const SurveyPage = () => {
                 All questions in this survey are mandatory. Please answer all questions to proceed.
               </AlertDescription>
             </Alert>
-            <SurveyForm onComplete={() => setCompleted(true)} />
+            <SurveyForm onComplete={handleComplete} />
           </>
         ) : (
           <motion.div
@@ -73,7 +171,7 @@ const SurveyPage = () => {
       
       <AuthModal 
         isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)}
+        onClose={handleAuthModalClose}
         defaultMode="signup"
       />
     </div>
