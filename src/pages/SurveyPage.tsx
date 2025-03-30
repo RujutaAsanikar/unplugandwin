@@ -117,7 +117,7 @@ const SurveyPage = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-secondary/10">
+    <div className="min-h-screen bg-gray-50">
       <Header activeTab="Home" />
       
       <motion.div
@@ -127,25 +127,25 @@ const SurveyPage = () => {
         className="container mx-auto max-w-4xl px-4 py-8"
       >
         {!completed ? (
-          <>
-            <Alert className="mb-6 bg-primary/10 border-primary/20">
-              <Info className="h-4 w-4 mr-2" />
-              <AlertDescription>
-                All questions in this survey are mandatory. Please answer all questions to proceed.
-              </AlertDescription>
-            </Alert>
-            <SurveyForm onComplete={handleComplete} />
-          </>
+          <Card className="border-0 shadow-sm rounded-2xl overflow-hidden bg-white">
+            <CardContent className="p-8 md:p-12">
+              <h1 className="text-3xl font-bold mb-2">UnplugAndWin Survey</h1>
+              <p className="text-gray-600 mb-6">
+                Help us understand your needs to provide the best digital detox experience
+              </p>
+              <SurveyForm onComplete={handleComplete} />
+            </CardContent>
+          </Card>
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="w-full max-w-2xl mx-auto bg-green-50 border-green-200">
+            <Card className="w-full max-w-2xl mx-auto bg-white border-0 shadow-sm rounded-2xl">
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-green-700">Survey Completed!</CardTitle>
-                <CardDescription className="text-green-600">
+                <CardTitle className="text-2xl text-primary">Survey Completed!</CardTitle>
+                <CardDescription className="text-gray-600">
                   Thank you for submitting your survey. Your responses have been recorded.
                 </CardDescription>
               </CardHeader>
@@ -156,7 +156,7 @@ const SurveyPage = () => {
                 <div className="flex justify-center">
                   <Button 
                     size="lg" 
-                    className="bg-primary hover:bg-primary/90 font-medium"
+                    className="bg-primary hover:bg-primary/90 font-medium rounded-full px-8"
                     onClick={handleSignUpClick}
                   >
                     Sign up now
