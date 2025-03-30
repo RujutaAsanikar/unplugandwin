@@ -24,7 +24,6 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const SurveyPage = () => {
   const [completed, setCompleted] = useState(false);
@@ -41,10 +40,8 @@ const SurveyPage = () => {
     setSurveyData(data);
     setCompleted(true);
     
-    // Store survey data in local storage for later use
     localStorage.setItem('surveyData', JSON.stringify(data));
 
-    // Attempt to save data to Supabase if user is already logged in
     const saveDataToSupabase = async () => {
       try {
         const { data: authData } = await supabase.auth.getUser();
@@ -85,7 +82,6 @@ const SurveyPage = () => {
     saveDataToSupabase();
   };
   
-  // Handle saving data after user authenticates
   const handleAuthModalClose = async () => {
     setShowAuthModal(false);
     
@@ -186,7 +182,7 @@ const SurveyPage = () => {
       <div className="min-h-screen bg-gray-50">
         <Header activeTab="Home" />
         <Drawer open={isDialogOpen} onOpenChange={handleOpenChange}>
-          <DrawerContent>
+          <DrawerContent className="max-h-[90vh] overflow-y-auto">
             <DrawerHeader>
               <DrawerTitle className="text-center">UnplugAndWin Survey</DrawerTitle>
               <DrawerDescription className="text-center">
@@ -223,18 +219,16 @@ const SurveyPage = () => {
       <Header activeTab="Home" />
       
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center text-2xl">UnplugAndWin Survey</DialogTitle>
             <DialogDescription className="text-center">
               Help us understand your needs to provide the best digital detox experience
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="h-[70vh]">
-            <div className="px-2 py-4">
-              {renderSurveyContent()}
-            </div>
-          </ScrollArea>
+          <div className="px-2 py-4">
+            {renderSurveyContent()}
+          </div>
         </DialogContent>
       </Dialog>
       
