@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -46,6 +47,7 @@ const AdminPage = () => {
   const [completedChallenges, setCompletedChallenges] = useState<CompletedChallenge[]>([]);
   const [userSurveys, setUserSurveys] = useState<UserSurvey[]>([]);
   const [usersList, setUsersList] = useState<UserInfo[]>([]);
+  // Set the default active tab to 'users' to make the User Accounts tab visible by default
   const [activeTab, setActiveTab] = useState('users');
   const { toast } = useToast();
 
@@ -350,7 +352,7 @@ const AdminPage = () => {
               </Button>
             </div>
             
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="users">
               <TabsList className="grid grid-cols-3 mb-4">
                 <TabsTrigger value="users" className="flex items-center">
                   <Users className="mr-2 h-4 w-4" />
