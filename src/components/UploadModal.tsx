@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -95,7 +94,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
       if (error) throw error;
       
       // Get the public URL with correct CORS settings and cache busting
-      const timestamp = Date.now();
       const publicUrl = getPublicUrl('screenshots', filePath);
       
       console.log('Uploaded image URL:', publicUrl);
@@ -106,7 +104,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
         console.warn("Image preloading failed, but continuing with upload");
       }
       
-      // Return the full public URL
       return filePath;
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -121,7 +118,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
     }
   };
 
-  // Preload image to ensure it loads properly
   const preloadImage = (url: string): Promise<boolean> => {
     return new Promise((resolve) => {
       const img = document.createElement('img');
@@ -135,7 +131,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
     });
   };
 
-  // Function to compress and resize images before upload
   const compressImage = async (file: File): Promise<Blob> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
