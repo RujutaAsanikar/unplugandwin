@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, User, AlertTriangle, Image, ListFilter, FileSpreadsheet } from 'lucide-react';
+import { Shield, User, AlertTriangle, Image, ListFilter, FileSpreadsheet, Users } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -32,13 +31,22 @@ interface UserSurvey {
   preferredRewards: string[] | null;
 }
 
+interface UserInfo {
+  id: string;
+  email: string;
+  username: string;
+  createdAt: string;
+  lastSignIn: string | null;
+}
+
 const AdminPage = () => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [completedChallenges, setCompletedChallenges] = useState<CompletedChallenge[]>([]);
   const [userSurveys, setUserSurveys] = useState<UserSurvey[]>([]);
-  const [activeTab, setActiveTab] = useState('challenges');
+  const [usersList, setUsersList] = useState<UserInfo[]>([]);
+  const [activeTab, setActiveTab] = useState('users');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,7 +66,8 @@ const AdminPage = () => {
         if (data) {
           await Promise.all([
             fetchCompletedChallenges(),
-            fetchUserSurveys()
+            fetchUserSurveys(),
+            fetchUsers()
           ]);
         }
       } catch (error) {
@@ -204,10 +213,61 @@ const AdminPage = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      // Get all profiles to get usernames
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, created_at');
+
+      if (profilesError) throw profilesError;
+      
+      if (profilesData && profilesData.length > 0) {
+        // Transform the data
+        const users = profilesData.map(profile => ({
+          id: profile.id,
+          email: '', // We'll populate this from auth.users if possible
+          username: profile.username || 'Unknown',
+          createdAt: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown',
+          lastSignIn: null
+        }));
+        
+        // Try to get more info for each user, but this may fail due to permissions
+        for (const userInfo of users) {
+          try {
+            // Note: This will only work if Supabase service_role key is used or admin rights
+            // For demo purposes, we'll continue even if this fails
+            const { data: userData } = await supabase.auth.admin.getUserById(userInfo.id);
+            
+            if (userData && userData.user) {
+              userInfo.email = userData.user.email || '';
+              userInfo.lastSignIn = userData.user.last_sign_in_at 
+                ? new Date(userData.user.last_sign_in_at).toLocaleDateString() 
+                : null;
+            }
+          } catch (error) {
+            console.warn(`Could not fetch auth details for user ${userInfo.id}`, error);
+            // Continue anyway, we already have basic profile info
+          }
+        }
+        
+        setUsersList(users);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error fetching users',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleRefresh = () => {
     if (isAdmin) {
       fetchCompletedChallenges();
       fetchUserSurveys();
+      fetchUsers();
       toast({
         title: 'Refreshing data',
         description: 'Getting the latest user data.',
@@ -291,7 +351,11 @@ const AdminPage = () => {
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-2 mb-4">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="users" className="flex items-center">
+                  <Users className="mr-2 h-4 w-4" />
+                  User Accounts
+                </TabsTrigger>
                 <TabsTrigger value="challenges" className="flex items-center">
                   <ListFilter className="mr-2 h-4 w-4" />
                   Challenge Completions
@@ -301,6 +365,52 @@ const AdminPage = () => {
                   User Surveys
                 </TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="users">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Accounts</CardTitle>
+                    <CardDescription>
+                      All registered users and their account information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {usersList.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        No user accounts found.
+                      </p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>User ID</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Username</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Last Sign In</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {usersList.map((userInfo) => (
+                            <TableRow key={userInfo.id}>
+                              <TableCell className="font-mono text-xs">
+                                {userInfo.id}
+                              </TableCell>
+                              <TableCell>{userInfo.email || '-'}</TableCell>
+                              <TableCell className="flex items-center">
+                                <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                                {userInfo.username || '-'}
+                              </TableCell>
+                              <TableCell>{userInfo.createdAt}</TableCell>
+                              <TableCell>{userInfo.lastSignIn || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
               
               <TabsContent value="challenges">
                 <Card>
