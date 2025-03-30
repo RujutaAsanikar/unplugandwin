@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -24,14 +23,14 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SurveyPage = () => {
   const [completed, setCompleted] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [surveyData, setSurveyData] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(true);
-  const isMobile = useMediaQuery("(max-width: 640px)");
+  const isMobile = useIsMobile();
   
   const handleSignUpClick = () => {
     setShowAuthModal(true);
