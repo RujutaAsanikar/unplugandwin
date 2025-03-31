@@ -1,15 +1,54 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAuth } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ScreenTimeGraphProps {
-  data: ScreenTimeEntry[];
+  data?: ScreenTimeEntry[];
 }
 
-const ScreenTimeGraph: React.FC<ScreenTimeGraphProps> = ({ data }) => {
-  const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+const ScreenTimeGraph: React.FC<ScreenTimeGraphProps> = ({ data = [] }) => {
+  const { user } = useAuth();
+  const [entries, setEntries] = useState<ScreenTimeEntry[]>(data);
+  
+  useEffect(() => {
+    if (user && entries.length === 0) {
+      fetchScreenTimeData();
+    }
+  }, [user]);
+
+  const fetchScreenTimeData = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('screen_time_entries')
+        .select('*')
+        .eq('user_id', user.id);
+        
+      if (error) {
+        console.error("Error fetching entries:", error);
+      } else {
+        // Transform the data to match ScreenTimeEntry type
+        const formattedEntries = data.map(entry => ({
+          id: entry.id,
+          date: entry.date,
+          minutes: entry.hours * 60, // Convert hours to minutes
+          user_id: entry.user_id,
+          screenshotUrl: undefined
+        }));
+        setEntries(formattedEntries);
+      }
+    } catch (error) {
+      console.error("Unexpected error fetching entries:", error);
+    }
+  };
+
+  // Sort data by date
+  const sortedData = [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   
   // Format data for the chart
   const chartData = sortedData.map(entry => ({

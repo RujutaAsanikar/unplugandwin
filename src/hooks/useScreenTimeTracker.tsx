@@ -56,6 +56,11 @@ export const useScreenTimeTracker = ({ onPointsEarned }: UseScreenTimeTrackerPro
           screenshotUrl: undefined
         }));
         setEntries(formattedEntries);
+        
+        // Update the screen time graph data in DashboardContent
+        window.dispatchEvent(new CustomEvent('screenTimeDataUpdated', { 
+          detail: { entries: formattedEntries } 
+        }));
       }
     } catch (error) {
       console.error("Unexpected error fetching entries:", error);

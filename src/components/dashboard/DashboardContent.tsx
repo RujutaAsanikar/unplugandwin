@@ -5,6 +5,7 @@ import ScreenTimeTracker from '@/components/ScreenTimeTracker';
 import PointsDisplay from '@/components/PointsDisplay';
 import ChallengeStartCard from './ChallengeStartCard';
 import LoginPrompt from './LoginPrompt';
+import ScreenTimeGraph from '@/components/ScreenTimeGraph';
 import { PointsState } from '@/lib/types';
 
 interface DashboardContentProps {
@@ -54,6 +55,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
       )}
 
       <ScreenTimeTracker onPointsEarned={onPointsEarned} />
+      
+      <div className="mt-6">
+        {user && <ScreenTimeGraph data={[]} />}
+      </div>
     </motion.div>
   );
 };

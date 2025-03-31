@@ -10,6 +10,8 @@ import TermsModal from '@/components/TermsModal';
 import ConfettiOverlay from '@/components/ConfettiOverlay';
 import AuthModal from '@/components/AuthModal';
 import { useChallengeProgress } from '@/hooks/useChallengeProgress';
+import { ScreenTimeEntry } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   useEffect(() => {
@@ -19,6 +21,7 @@ const Index = () => {
   const [points, setPoints] = useState(getUserPoints());
   const [showTerms, setShowTerms] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [screenTimeEntries, setScreenTimeEntries] = useState<ScreenTimeEntry[]>([]);
   const { user } = useAuth();
   
   const {
@@ -34,6 +37,39 @@ const Index = () => {
     setPoints(getUserPoints());
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      fetchScreenTimeEntries();
+    }
+  }, [user]);
+
+  const fetchScreenTimeEntries = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('screen_time_entries')
+        .select('*')
+        .eq('user_id', user.id);
+        
+      if (error) {
+        console.error("Error fetching entries:", error);
+      } else {
+        // Transform the data to match ScreenTimeEntry type
+        const formattedEntries = data.map(entry => ({
+          id: entry.id,
+          date: entry.date,
+          minutes: entry.hours * 60, // Convert hours to minutes
+          user_id: entry.user_id,
+          screenshotUrl: undefined
+        }));
+        setScreenTimeEntries(formattedEntries);
+      }
+    } catch (error) {
+      console.error("Unexpected error fetching entries:", error);
+    }
+  };
+
   const handlePointsEarned = (earnedPoints: number) => {
     setPoints(prev => ({
       ...prev,
@@ -43,6 +79,7 @@ const Index = () => {
     // Re-check progress when points are updated
     if (user) {
       checkProgress();
+      fetchScreenTimeEntries(); // Refresh screen time data when points are earned
     }
   };
 
