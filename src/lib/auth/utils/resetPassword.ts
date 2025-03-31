@@ -14,8 +14,13 @@ export async function resetPassword(email: string) {
     // Make sure we're using proper email formatting
     email = email.trim().toLowerCase();
     
+    // Get the base URL from the current window location
+    const baseUrl = window.location.origin;
+    const resetUrl = `${baseUrl}/reset-password`;
+    console.log("Using reset URL:", resetUrl);
+    
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: resetUrl,
     });
     
     if (error) {
