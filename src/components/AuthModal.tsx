@@ -1,311 +1,114 @@
-
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useAuth } from '@/lib/auth';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle, User } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from "@/components/ui/use-toast"
+import { Loader2 } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  defaultMode?: 'login' | 'signup';
+  onOpenChange: (open: boolean) => void;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ 
-  isOpen, 
-  onClose,
-  defaultMode = 'login'
-}) => {
-  const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onOpenChange }) => {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [usernameError, setUsernameError] = useState('');
-  const [generalError, setGeneralError] = useState('');
-  const { toast } = useToast();
-  
-  const { signIn, signUp, user } = useAuth();
-
-  // Close modal if user is logged in
-  useEffect(() => {
-    if (user) {
-      onClose();
-    }
-  }, [user, onClose]);
-
-  // Update mode when defaultMode prop changes
-  useEffect(() => {
-    setMode(defaultMode);
-    console.log("Mode updated to:", defaultMode);
-  }, [defaultMode]);
-
-  // Reset form state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setEmail('');
-      setPassword('');
-      setUsername('');
-      setEmailError('');
-      setPasswordError('');
-      setUsernameError('');
-      setGeneralError('');
-      setIsSubmitting(false);
-    }
-  }, [isOpen]);
-
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const trimmedEmail = email.trim();
-    
-    if (!trimmedEmail) {
-      setEmailError('Email is required');
-      return false;
-    } else if (!emailRegex.test(trimmedEmail)) {
-      setEmailError('Please enter a valid email address');
-      return false;
-    }
-    setEmailError('');
-    return true;
-  };
-
-  const validatePassword = (password: string): boolean => {
-    if (!password) {
-      setPasswordError('Password is required');
-      return false;
-    } else if (mode === 'signup' && password.length < 6) {
-      setPasswordError('Password must be at least 6 characters long');
-      return false;
-    }
-    setPasswordError('');
-    return true;
-  };
-
-  const validateUsername = (username: string): boolean => {
-    if (mode === 'signup') {
-      const trimmedUsername = username.trim();
-      if (!trimmedUsername) {
-        setUsernameError('Username is required');
-        return false;
-      } else if (trimmedUsername.length < 3) {
-        setUsernameError('Username must be at least 3 characters long');
-        return false;
-      }
-      setUsernameError('');
-    }
-    return true;
-  };
+  const [isLoading, setIsLoading] = useState(false);
+  const { signUp, signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset errors
-    setEmailError('');
-    setPasswordError('');
-    setUsernameError('');
-    setGeneralError('');
-    
-    // Validate inputs
-    const trimmedEmail = email.trim();
-    const trimmedUsername = username.trim();
-    const isEmailValid = validateEmail(trimmedEmail);
-    const isPasswordValid = validatePassword(password);
-    const isUsernameValid = validateUsername(trimmedUsername);
-    
-    if (!isEmailValid || !isPasswordValid || (mode === 'signup' && !isUsernameValid)) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+    setIsLoading(true);
     try {
-      let response;
-      
-      if (mode === 'login') {
-        response = await signIn(trimmedEmail, password);
+      if (isLogin) {
+        await signIn(email, password);
+        toast({
+          title: "Login successful!",
+          description: "You are now logged in.",
+        });
       } else {
-        response = await signUp(trimmedEmail, password, trimmedUsername);
-        
-        // If signup was successful but no user yet (email verification needed)
-        if (!response.error && !response.data.session) {
-          toast({
-            title: "Sign up successful",
-            description: "Please check your email for a confirmation link!",
-          });
-          // Automatically close the modal after successful signup
-          onClose();
-        }
+        await signUp(email, password);
+        toast({
+          title: "Registration successful!",
+          description: "You are now registered.",
+        });
       }
-      
-      if (response.error) {
-        setGeneralError(response.error.message);
-      }
-    } catch (error) {
-      console.error('Authentication error:', error);
-      setGeneralError(error.message || 'An unexpected error occurred');
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Authentication failed.",
+        description: error.message || "Something went wrong. Please try again.",
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  };
-
-  const toggleMode = () => {
-    setMode(mode === 'login' ? 'signup' : 'login');
-    setEmailError('');
-    setPasswordError('');
-    setUsernameError('');
-    setGeneralError('');
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{mode === 'login' ? 'Welcome Back' : 'Welcome'}</DialogTitle>
+          <DialogTitle>{isLogin ? "Login" : "Register"}</DialogTitle>
           <DialogDescription>
-            {mode === 'login' ? 'Sign in to continue' : 'Sign up to track your digital detox progress'}
+            {isLogin
+              ? "Enter your email and password to log in to your account."
+              : "Enter your email and password to create an account."}
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          {generalError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{generalError}</AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (emailError) validateEmail(e.target.value);
-                }}
-                onBlur={() => validateEmail(email)}
-                className={`pl-10 ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                placeholder="your@email.com"
-                required
-                autoComplete="email"
-              />
-            </div>
-            {emailError && <p className="text-sm text-red-500 mt-1">{emailError}</p>}
+            <Input
+              id="email"
+              placeholder="Enter your email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
           </div>
-          
-          {mode === 'signup' && (
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value);
-                    if (usernameError) validateUsername(e.target.value);
-                  }}
-                  onBlur={() => validateUsername(username)}
-                  className={`pl-10 ${usernameError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                  placeholder="Your username"
-                  required
-                  autoComplete="username"
-                />
-              </div>
-              {usernameError && <p className="text-sm text-red-500 mt-1">{usernameError}</p>}
-            </div>
-          )}
-          
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (passwordError) validatePassword(e.target.value);
-                }}
-                onBlur={() => validatePassword(password)}
-                className={`pl-10 pr-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                placeholder="••••••••"
-                required
-                minLength={mode === 'signup' ? 6 : undefined}
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              />
-              <button
-                type="button"
-                onClick={togglePasswordVisibility}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {passwordError && <p className="text-sm text-red-500 mt-1">{passwordError}</p>}
+            <Input
+              id="password"
+              placeholder="Enter your password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+            />
           </div>
-          
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="pt-4"
-            >
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isSubmitting}
-                style={{ backgroundColor: "#9b87f5" }}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {mode === 'login' ? 'Signing in...' : 'Creating account...'}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    {mode === 'login' ? 'Sign In' : 'Sign Up'}
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
-                )}
-              </Button>
-            </motion.div>
-          </AnimatePresence>
-        </form>
-        
-        <DialogFooter className="flex flex-col items-center sm:flex-row sm:justify-center">
-          <Button
-            type="button"
-            variant="link"
-            onClick={toggleMode}
-            className="text-primary hover:text-primary/80"
-          >
-            {mode === 'login' 
-              ? "Don't have an account? Sign Up" 
-              : "Already have an account? Sign In"}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Please wait</>
+            ) : (
+              isLogin ? "Login" : "Register"
+            )}
           </Button>
-        </DialogFooter>
+        </form>
+        <div className="mt-4 text-sm text-center">
+          <button
+            type="button"
+            className="text-primary hover:underline"
+            onClick={() => setIsLogin(!isLogin)}
+            disabled={isLoading}
+          >
+            {isLogin
+              ? "Don't have an account? Register"
+              : "Already have an account? Login"}
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );
