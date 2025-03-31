@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenTimeEntry } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -76,7 +75,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
           
           if (entry.screenshots && entry.screenshots.length > 0) {
             const path = entry.screenshots[0].storage_path;
-            // Verify the file actually exists in storage
             const exists = await fileExists('screenshots', path);
             
             if (exists) {
@@ -267,7 +265,6 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
         description: `You've recorded ${minutes} minutes for ${new Date(selectedDate).toLocaleDateString()}`,
       });
       
-      // Refresh the entries to ensure we're showing the most up-to-date data
       setRefreshTrigger(prev => prev + 1);
       
     } catch (error) {
@@ -554,7 +551,7 @@ const ScreenTimeTracker: React.FC<ScreenTimeTrackerProps> = ({ onPointsEarned })
       
       <AuthModal
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onOpenChange={setAuthModalOpen}
         defaultMode="signup"
       />
 
