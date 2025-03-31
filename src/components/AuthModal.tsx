@@ -24,8 +24,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
         </DialogHeader>
         <Tabs defaultValue={defaultMode} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-white">Login</TabsTrigger>
+            <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-white">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="login">
             <LoginForm onSuccess={() => onOpenChange(false)} />

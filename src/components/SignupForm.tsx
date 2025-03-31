@@ -18,7 +18,7 @@ import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
-  username: z.string().min(3, { message: 'Username must be at least 3 characters' }).optional(),
+  username: z.string().min(3, { message: 'Name must be at least 3 characters' }).optional(),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
   confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -91,9 +91,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username (optional)</FormLabel>
+              <FormLabel>Your Name</FormLabel>
               <FormControl>
-                <Input placeholder="username" {...field} />
+                <Input placeholder="Enter your name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
