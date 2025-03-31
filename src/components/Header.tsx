@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, DollarSign, Info, Home, LayoutDashboard } from 'lucide-react';
+import { Trophy, DollarSign, Home, LayoutDashboard } from 'lucide-react';
 import AuthButton from './AuthButton';
 
 interface HeaderProps {
@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
   
   const headerLinks = [
     { name: 'Home', path: '/home', icon: Home },
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Challenges', path: '/challenges', icon: Trophy },
     { name: 'Rewards', path: '/rewards', icon: DollarSign },
   ];

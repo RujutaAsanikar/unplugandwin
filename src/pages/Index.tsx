@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import ScreenTimeTracker from '@/components/ScreenTimeTracker';
 import { getUserPoints, saveUserPoints } from '@/lib/pointsManager';
 import PointsDisplay from '@/components/PointsDisplay';
-import { Trophy } from 'lucide-react';
+import { Trophy, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
 import { useToast } from '@/components/ui/use-toast';
@@ -18,6 +18,7 @@ import {
 } from '@/lib/challengeManager';
 import ConfettiOverlay from '@/components/ConfettiOverlay';
 import { useAuth } from '@/lib/auth';
+import AuthModal from '@/components/AuthModal';
 
 const Index = () => {
   useEffect(() => {
@@ -29,6 +30,7 @@ const Index = () => {
   const [challengeStarted, setChallengeStarted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [challengeProgress, setChallengeProgress] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -36,13 +38,13 @@ const Index = () => {
     const savedChallengeStarted = isChallengeStarted();
     setChallengeStarted(savedChallengeStarted);
     
-    if (savedChallengeStarted) {
+    if (savedChallengeStarted && user) {
       // If challenge is already started, update the progress
       checkProgress();
     }
     
     setPoints(getUserPoints());
-  }, []);
+  }, [user]);
 
   const checkProgress = async () => {
     const previousProgress = Number(localStorage.getItem('challengeProgress') || '0');
@@ -77,10 +79,16 @@ const Index = () => {
     }));
     
     // Re-check progress when points are updated
-    checkProgress();
+    if (user) {
+      checkProgress();
+    }
   };
 
   const handleStartChallenge = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     setShowTerms(true);
   };
 
@@ -124,15 +132,29 @@ const Index = () => {
     }
   };
 
-  return (
-    <motion.div
-      className="min-h-screen bg-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-    >
-      <Header activeTab="Dashboard" />
-      <main className="container max-w-6xl mx-auto py-8 pb-20">
+  const renderDashboardContent = () => {
+    if (!user) {
+      return (
+        <motion.div 
+          variants={itemVariants}
+          className="mb-8 mx-4 glassmorphism rounded-xl p-6 border border-primary/30 shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)]"
+        >
+          <div className="flex flex-col items-center text-center p-8">
+            <LogIn className="w-12 h-12 mb-4 text-primary" />
+            <h2 className="text-2xl font-semibold mb-4">Sign in to access your Dashboard</h2>
+            <p className="text-gray-600 mb-6">
+              You need to be signed in to track your progress, participate in challenges, and earn rewards.
+            </p>
+            <Button onClick={() => setShowAuthModal(true)} className="bg-primary">
+              Sign in or Register
+            </Button>
+          </div>
+        </motion.div>
+      );
+    }
+
+    return (
+      <>
         <div className="px-4 mb-6 flex justify-end">
           <PointsDisplay points={points} />
         </div>
@@ -160,6 +182,20 @@ const Index = () => {
         )}
 
         <ScreenTimeTracker onPointsEarned={handlePointsEarned} />
+      </>
+    );
+  };
+
+  return (
+    <motion.div
+      className="min-h-screen bg-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
+      <Header activeTab="Dashboard" />
+      <main className="container max-w-6xl mx-auto py-8 pb-20">
+        {renderDashboardContent()}
         
         <TermsModal 
           isOpen={showTerms} 
@@ -172,6 +208,8 @@ const Index = () => {
           isVisible={showConfetti} 
           onClose={handleCloseConfetti}
         />
+        
+        <AuthModal isOpen={showAuthModal} onOpenChange={setShowAuthModal} />
       </main>
     </motion.div>
   );
