@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -6,6 +6,10 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Star, Globe, GraduationCap, ExternalLink, ArrowRight } from 'lucide-react';
 
 const HomePage = () => {
+  useEffect(() => {
+    document.title = "Unplug And Win";
+  }, []);
+
   const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -101,11 +105,11 @@ const HomePage = () => {
               </p>
             </div>
             <div className="flex justify-center gap-6 flex-wrap">
-              <Button variant="outline" className="rounded-full border-primary text-primary hover:bg-primary/10">
-                For Children
+              <Button variant="outline" asChild className="rounded-full border-primary text-primary hover:bg-primary/10">
+                <Link to="/survey">For Children</Link>
               </Button>
-              <Button variant="outline" className="rounded-full border-primary text-primary hover:bg-primary/10">
-                For Parents
+              <Button variant="outline" asChild className="rounded-full border-primary text-primary hover:bg-primary/10">
+                <Link to="/survey">For Parents</Link>
               </Button>
             </div>
           </motion.div>
@@ -468,4 +472,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-

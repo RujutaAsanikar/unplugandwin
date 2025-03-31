@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import SurveyForm from '@/components/SurveyForm';
 import { Info } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
@@ -32,6 +31,10 @@ const SurveyPage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const isMobile = useIsMobile();
   
+  useEffect(() => {
+    document.title = "Survey - Unplug And Win";
+  }, []);
+
   const handleSignUpClick = () => {
     setShowAuthModal(true);
   };

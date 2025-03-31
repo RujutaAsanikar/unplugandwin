@@ -20,6 +20,10 @@ import ConfettiOverlay from '@/components/ConfettiOverlay';
 import { useAuth } from '@/lib/auth';
 
 const Index = () => {
+  useEffect(() => {
+    document.title = "Dashboard - Unplug And Win";
+  }, []);
+
   const [points, setPoints] = useState(getUserPoints());
   const [showTerms, setShowTerms] = useState(false);
   const [challengeStarted, setChallengeStarted] = useState(false);
