@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AuthContext } from './AuthContext';
-import { signIn, signUp, signOut } from './utils';
+import { signIn, signUp, signOut, resetPassword } from './utils';
 import { useAuthState } from './hooks/useAuthState';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -16,6 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signUp,
         signOut,
+        resetPassword,
       }}
     >
       {children}

@@ -23,9 +23,10 @@ const formSchema = z.object({
 
 interface LoginFormProps {
   onSuccess: () => void;
+  onForgotPassword: () => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onForgotPassword }) => {
   const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +93,17 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             </FormItem>
           )}
         />
+
+        <div className="flex justify-between items-center">
+          <Button 
+            type="button" 
+            variant="link" 
+            className="p-0 h-auto font-normal text-blue-600"
+            onClick={onForgotPassword}
+          >
+            Forgot password?
+          </Button>
+        </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
