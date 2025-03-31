@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
@@ -52,7 +53,15 @@ const ScreenTimeTracker: React.FC<{ onPointsEarned: (points: number) => void }> 
           variant: "destructive",
         });
       } else {
-        setEntries(data || []);
+        // Transform the data to match ScreenTimeEntry type
+        const formattedEntries = data.map(entry => ({
+          id: entry.id,
+          date: entry.date,
+          minutes: entry.hours * 60, // Convert hours to minutes
+          user_id: entry.user_id,
+          screenshotUrl: undefined
+        }));
+        setEntries(formattedEntries);
       }
     } catch (error) {
       console.error("Unexpected error fetching entries:", error);
@@ -210,7 +219,7 @@ const ScreenTimeTracker: React.FC<{ onPointsEarned: (points: number) => void }> 
             type="number"
             placeholder="Hours"
             value={hours}
-            onChange={(e) => setHours(e.target.value)}
+            onChange={(e) => setHours(e.target.value === '' ? '' : Number(e.target.value))}
             className="w-24"
           />
         </div>
@@ -227,7 +236,7 @@ const ScreenTimeTracker: React.FC<{ onPointsEarned: (points: number) => void }> 
           <ul className="space-y-2">
             {entries.map((entry) => (
               <li key={entry.id} className="text-sm">
-                {format(new Date(entry.date), 'PPP')}: {entry.hours} hours
+                {format(new Date(entry.date), 'PPP')}: {entry.minutes / 60} hours
               </li>
             ))}
           </ul>

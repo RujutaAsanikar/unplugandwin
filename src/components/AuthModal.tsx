@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
@@ -21,11 +21,22 @@ const AuthModal: React.FC<AuthModalProps> = ({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Account</DialogTitle>
+          <DialogDescription>Sign in or create an account to continue</DialogDescription>
         </DialogHeader>
         <Tabs defaultValue={defaultMode} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-white">Login</TabsTrigger>
-            <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-white">Sign Up</TabsTrigger>
+            <TabsTrigger 
+              value="login" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-white"
+            >
+              Login
+            </TabsTrigger>
+            <TabsTrigger 
+              value="signup" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-white"
+            >
+              Sign Up
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="login">
             <LoginForm onSuccess={() => onOpenChange(false)} />
