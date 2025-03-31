@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -85,49 +86,49 @@ const SurveyPage = () => {
     saveDataToSupabase();
   };
   
-  const handleAuthModalClose = async () => {
-    setShowAuthModal(false);
+  const handleAuthModalOpenChange = async (open: boolean) => {
+    setShowAuthModal(open);
     
-    if (!surveyData) return;
-    
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      if (authData?.user) {
-        const { error } = await supabase.from('user_surveys').insert({
-          name: surveyData.name,
-          age: surveyData.age,
-          personal_phone: surveyData.personal_phone,
-          parent_phone: surveyData.parent_phone || null,
-          daily_screen_time: surveyData.daily_screen_time,
-          social_media_platforms: surveyData.social_media_platforms,
-          device_access: surveyData.device_access,
-          areas_of_concern: surveyData.areas_of_concern,
-          preferred_rewards: surveyData.preferred_rewards,
-          user_id: authData.user.id
-        });
-        
-        if (error) {
-          console.error("Error saving survey after auth:", error);
-          toast({
-            title: "Error Saving Data",
-            description: "There was a problem saving your survey data. Please try again.",
-            variant: "destructive"
+    if (!open && surveyData) {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          const { error } = await supabase.from('user_surveys').insert({
+            name: surveyData.name,
+            age: surveyData.age,
+            personal_phone: surveyData.personal_phone,
+            parent_phone: surveyData.parent_phone || null,
+            daily_screen_time: surveyData.daily_screen_time,
+            social_media_platforms: surveyData.social_media_platforms,
+            device_access: surveyData.device_access,
+            areas_of_concern: surveyData.areas_of_concern,
+            preferred_rewards: surveyData.preferred_rewards,
+            user_id: authData.user.id
           });
-        } else {
-          toast({
-            title: "Survey Saved",
-            description: "Your survey data has been saved successfully.",
-            variant: "default"
-          });
+          
+          if (error) {
+            console.error("Error saving survey after auth:", error);
+            toast({
+              title: "Error Saving Data",
+              description: "There was a problem saving your survey data. Please try again.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Survey Saved",
+              description: "Your survey data has been saved successfully.",
+              variant: "default"
+            });
+          }
         }
+      } catch (error) {
+        console.error("Error saving survey after auth:", error);
+        toast({
+          title: "Error Saving Data",
+          description: "There was a problem saving your survey data. Please try again.",
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      console.error("Error saving survey after auth:", error);
-      toast({
-        title: "Error Saving Data",
-        description: "There was a problem saving your survey data. Please try again.",
-        variant: "destructive"
-      });
     }
   };
   
@@ -210,7 +211,7 @@ const SurveyPage = () => {
 
         <AuthModal 
           isOpen={showAuthModal} 
-          onClose={handleAuthModalClose}
+          onOpenChange={handleAuthModalOpenChange}
           defaultMode="signup"
         />
       </div>
@@ -247,7 +248,7 @@ const SurveyPage = () => {
       
       <AuthModal 
         isOpen={showAuthModal} 
-        onClose={handleAuthModalClose}
+        onOpenChange={handleAuthModalOpenChange}
         defaultMode="signup"
       />
     </div>

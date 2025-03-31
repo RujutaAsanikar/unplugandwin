@@ -85,7 +85,7 @@ const AuthButton: React.FC = () => {
 
       <AuthModal 
         isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
+        onOpenChange={setShowAuthModal} 
         defaultMode={authMode}
       />
     </>
