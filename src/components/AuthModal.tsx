@@ -141,6 +141,21 @@ const AuthModal: React.FC<AuthModalProps> = ({
       } else if (mode === 'signup') {
         response = await signUp(trimmedEmail, password, trimmedUsername);
         
+        // Email already exists - switch to login mode
+        if (response.error && (
+            response.error.message.includes('already exists') || 
+            response.error.message.includes('Email already exists')
+          )) {
+          toast({
+            title: "Account already exists",
+            description: "This email is already registered. Please sign in instead.",
+          });
+          setMode('login');
+          setGeneralError('');
+          setIsSubmitting(false);
+          return;
+        }
+        
         // If signup was successful but no user yet (email verification needed)
         if (!response.error && !response.data.session) {
           toast({
