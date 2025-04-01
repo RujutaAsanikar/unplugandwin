@@ -17,6 +17,7 @@ interface AuthContextType {
     data: { user: User | null; session: Session | null };
   }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null; data: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -136,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailRedirectTo: string;
         data?: { username: string }
       } = {
-        emailRedirectTo: window.location.origin
+        emailRedirectTo: `${window.location.origin}`
       };
 
       if (username) {
@@ -154,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      if (data.user?.identities?.length === 0) {
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
         toast({
           title: "Account already exists",
           description: "This email is already registered. Please sign in instead.",
@@ -188,6 +189,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password reset link sent",
+        description: "Check your email for a password reset link",
+      });
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Password reset error:", error.message);
+      
+      toast({
+        title: "Password reset failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      
+      return { data: null, error };
+    }
+  };
+
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -214,6 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signUp,
         signOut,
+        resetPassword,
       }}
     >
       {children}

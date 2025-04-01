@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultMode?: 'login' | 'signup';
+  defaultMode?: 'login' | 'signup' | 'forgot-password';
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ 
@@ -21,7 +21,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   defaultMode = 'login'
 }) => {
-  const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -33,7 +33,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [generalError, setGeneralError] = useState('');
   const { toast } = useToast();
   
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, resetPassword, user } = useAuth();
 
   // Close modal if user is logged in
   useEffect(() => {
@@ -78,6 +78,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const validatePassword = (password: string): boolean => {
+    if (mode === 'forgot-password') {
+      return true;
+    }
+    
     if (!password) {
       setPasswordError('Password is required');
       return false;
@@ -120,7 +124,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     const isPasswordValid = validatePassword(password);
     const isUsernameValid = validateUsername(trimmedUsername);
     
-    if (!isEmailValid || !isPasswordValid || (mode === 'signup' && !isUsernameValid)) {
+    if (!isEmailValid || (mode !== 'forgot-password' && !isPasswordValid) || (mode === 'signup' && !isUsernameValid)) {
       return;
     }
     
@@ -131,7 +135,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
       
       if (mode === 'login') {
         response = await signIn(trimmedEmail, password);
-      } else {
+        if (response.error) {
+          setGeneralError(response.error.message);
+        }
+      } else if (mode === 'signup') {
         response = await signUp(trimmedEmail, password, trimmedUsername);
         
         // If signup was successful but no user yet (email verification needed)
@@ -142,11 +149,20 @@ const AuthModal: React.FC<AuthModalProps> = ({
           });
           // Automatically close the modal after successful signup
           onClose();
+        } else if (response.error) {
+          setGeneralError(response.error.message);
         }
-      }
-      
-      if (response.error) {
-        setGeneralError(response.error.message);
+      } else if (mode === 'forgot-password') {
+        response = await resetPassword(trimmedEmail);
+        if (!response.error) {
+          toast({
+            title: "Password reset email sent",
+            description: "Please check your email for a password reset link",
+          });
+          onClose();
+        } else {
+          setGeneralError(response.error.message);
+        }
       }
     } catch (error) {
       console.error('Authentication error:', error);
@@ -156,8 +172,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const toggleMode = () => {
-    setMode(mode === 'login' ? 'signup' : 'login');
+  const toggleMode = (newMode: 'login' | 'signup' | 'forgot-password') => {
+    setMode(newMode);
     setEmailError('');
     setPasswordError('');
     setUsernameError('');
@@ -168,13 +184,35 @@ const AuthModal: React.FC<AuthModalProps> = ({
     setShowPassword(!showPassword);
   };
 
+  const renderTitle = () => {
+    switch(mode) {
+      case 'login':
+        return 'Welcome Back';
+      case 'signup':
+        return 'Welcome';
+      case 'forgot-password':
+        return 'Reset Password';
+    }
+  };
+
+  const renderDescription = () => {
+    switch(mode) {
+      case 'login':
+        return 'Sign in to continue';
+      case 'signup':
+        return 'Sign up to track your digital detox progress';
+      case 'forgot-password':
+        return 'Enter your email to receive a password reset link';
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{mode === 'login' ? 'Welcome Back' : 'Welcome'}</DialogTitle>
+          <DialogTitle>{renderTitle()}</DialogTitle>
           <DialogDescription>
-            {mode === 'login' ? 'Sign in to continue' : 'Sign up to track your digital detox progress'}
+            {renderDescription()}
           </DialogDescription>
         </DialogHeader>
         
@@ -232,36 +270,51 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
           
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (passwordError) validatePassword(e.target.value);
-                }}
-                onBlur={() => validatePassword(password)}
-                className={`pl-10 pr-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                placeholder="••••••••"
-                required
-                minLength={mode === 'signup' ? 6 : undefined}
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              />
-              <button
-                type="button"
-                onClick={togglePasswordVisibility}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+          {mode !== 'forgot-password' && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) validatePassword(e.target.value);
+                  }}
+                  onBlur={() => validatePassword(password)}
+                  className={`pl-10 pr-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  placeholder="••••••••"
+                  required
+                  minLength={mode === 'signup' ? 6 : undefined}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordError && <p className="text-sm text-red-500 mt-1">{passwordError}</p>}
+              
+              {mode === 'login' && (
+                <div className="text-right">
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="p-0 h-auto text-sm text-primary hover:text-primary/80"
+                    onClick={() => toggleMode('forgot-password')}
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
+              )}
             </div>
-            {passwordError && <p className="text-sm text-red-500 mt-1">{passwordError}</p>}
-          </div>
+          )}
           
           <AnimatePresence mode="wait">
             <motion.div
@@ -281,11 +334,19 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {mode === 'login' ? 'Signing in...' : 'Creating account...'}
+                    {mode === 'login' 
+                      ? 'Signing in...' 
+                      : mode === 'signup' 
+                        ? 'Creating account...' 
+                        : 'Sending reset link...'}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    {mode === 'login' ? 'Sign In' : 'Sign Up'}
+                    {mode === 'login' 
+                      ? 'Sign In' 
+                      : mode === 'signup' 
+                        ? 'Sign Up' 
+                        : 'Send Reset Link'}
                     <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
@@ -295,16 +356,36 @@ const AuthModal: React.FC<AuthModalProps> = ({
         </form>
         
         <DialogFooter className="flex flex-col items-center sm:flex-row sm:justify-center">
-          <Button
-            type="button"
-            variant="link"
-            onClick={toggleMode}
-            className="text-primary hover:text-primary/80"
-          >
-            {mode === 'login' 
-              ? "Don't have an account? Sign Up" 
-              : "Already have an account? Sign In"}
-          </Button>
+          {mode === 'login' && (
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => toggleMode('signup')}
+              className="text-primary hover:text-primary/80"
+            >
+              Don't have an account? Sign Up
+            </Button>
+          )}
+          {mode === 'signup' && (
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => toggleMode('login')}
+              className="text-primary hover:text-primary/80"
+            >
+              Already have an account? Sign In
+            </Button>
+          )}
+          {mode === 'forgot-password' && (
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => toggleMode('login')}
+              className="text-primary hover:text-primary/80"
+            >
+              Back to Sign In
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
