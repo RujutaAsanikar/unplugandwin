@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import SurveyForm from '@/components/SurveyForm';
 import { Info } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
@@ -182,7 +181,7 @@ const SurveyPage = () => {
       <div className="min-h-screen bg-gray-50">
         <Header activeTab="Home" />
         <Drawer open={isDialogOpen} onOpenChange={handleOpenChange}>
-          <DrawerContent className="max-h-[90vh] overflow-y-auto">
+          <DrawerContent>
             <DrawerHeader>
               <DrawerTitle className="text-center">UnplugAndWin Survey</DrawerTitle>
               <DrawerDescription className="text-center">
@@ -219,7 +218,7 @@ const SurveyPage = () => {
       <Header activeTab="Home" />
       
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-center text-2xl">UnplugAndWin Survey</DialogTitle>
             <DialogDescription className="text-center">
