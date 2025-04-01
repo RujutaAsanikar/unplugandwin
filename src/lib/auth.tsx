@@ -132,18 +132,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Make sure we're using proper email formatting
       email = email.trim().toLowerCase();
       
-      // Check if user already exists
-      const { data: existingUsers } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email);
-      
-      if (existingUsers && existingUsers.length > 0) {
-        return { 
-          data: { user: null, session: null }, 
-          error: new Error("Email already exists") 
-        };
-      }
+      // Instead of querying the profiles table directly, try to sign up
+      // and handle the error if the user already exists
       
       // Add username to user metadata if provided
       const options: {
