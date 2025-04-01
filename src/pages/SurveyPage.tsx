@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -181,7 +182,7 @@ const SurveyPage = () => {
       <div className="min-h-screen bg-gray-50">
         <Header activeTab="Home" />
         <Drawer open={isDialogOpen} onOpenChange={handleOpenChange}>
-          <DrawerContent>
+          <DrawerContent className="h-auto max-h-[80%] rounded-t-xl">
             <DrawerHeader>
               <DrawerTitle className="text-center">UnplugAndWin Survey</DrawerTitle>
               <DrawerDescription className="text-center">
@@ -218,14 +219,14 @@ const SurveyPage = () => {
       <Header activeTab="Home" />
       
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center text-2xl">UnplugAndWin Survey</DialogTitle>
+        <DialogContent className="max-w-md w-[90%] p-6 rounded-2xl">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-center text-xl">UnplugAndWin Survey</DialogTitle>
             <DialogDescription className="text-center">
               Help us understand your needs to provide the best digital detox experience
             </DialogDescription>
           </DialogHeader>
-          <div className="px-2 py-4">
+          <div className="px-1">
             {renderSurveyContent()}
           </div>
         </DialogContent>
