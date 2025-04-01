@@ -36,6 +36,3 @@ export interface UserPoints {
   current: number;
   target: number;
 }
-
-// Adding PointsState type to fix the DashboardContent error
-export type PointsState = UserPoints;

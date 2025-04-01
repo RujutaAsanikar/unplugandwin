@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, DollarSign, Home, LayoutDashboard } from 'lucide-react';
+import { Trophy, DollarSign, Info, Home } from 'lucide-react';
 import AuthButton from './AuthButton';
 
 interface HeaderProps {
@@ -13,8 +13,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
   const location = useLocation();
   
   const headerLinks = [
-    { name: 'Home', path: '/home', icon: Home },
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Home', path: '/home', icon: Info },
+    { name: 'Dashboard', path: '/', icon: Home },
     { name: 'Challenges', path: '/challenges', icon: Trophy },
     { name: 'Rewards', path: '/rewards', icon: DollarSign },
   ];

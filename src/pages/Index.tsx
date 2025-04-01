@@ -2,73 +2,69 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
+import ScreenTimeTracker from '@/components/ScreenTimeTracker';
 import { getUserPoints, saveUserPoints } from '@/lib/pointsManager';
-import { useToast } from '@/components/ui/use-toast';
-import { useAuth } from '@/lib/auth';
-import DashboardContent from '@/components/dashboard/DashboardContent';
+import PointsDisplay from '@/components/PointsDisplay';
+import { Trophy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import TermsModal from '@/components/TermsModal';
+import { useToast } from '@/components/ui/use-toast';
+import { 
+  isChallengeStarted, 
+  startChallenge, 
+  updateChallengeProgress, 
+  getEntriesCount,
+  isJustCompleted
+} from '@/lib/challengeManager';
 import ConfettiOverlay from '@/components/ConfettiOverlay';
-import AuthModal from '@/components/AuthModal';
-import { useChallengeProgress } from '@/hooks/useChallengeProgress';
-import { ScreenTimeEntry } from '@/lib/types';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
 
 const Index = () => {
-  useEffect(() => {
-    document.title = "Dashboard - Unplug And Win";
-  }, []);
-
   const [points, setPoints] = useState(getUserPoints());
   const [showTerms, setShowTerms] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [screenTimeEntries, setScreenTimeEntries] = useState<ScreenTimeEntry[]>([]);
+  const [challengeStarted, setChallengeStarted] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [challengeProgress, setChallengeProgress] = useState(0);
+  const { toast } = useToast();
   const { user } = useAuth();
-  
-  const {
-    challengeStarted,
-    showConfetti,
-    checkProgress,
-    handleStartChallenge,
-    confirmStartChallenge,
-    handleCloseConfetti
-  } = useChallengeProgress();
 
   useEffect(() => {
-    setPoints(getUserPoints());
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchScreenTimeEntries();
-    }
-  }, [user]);
-
-  const fetchScreenTimeEntries = async () => {
-    if (!user) return;
+    const savedChallengeStarted = isChallengeStarted();
+    setChallengeStarted(savedChallengeStarted);
     
-    try {
-      const { data, error } = await supabase
-        .from('screen_time_entries')
-        .select('*')
-        .eq('user_id', user.id);
-        
-      if (error) {
-        console.error("Error fetching entries:", error);
-      } else {
-        // Transform the data to match ScreenTimeEntry type
-        const formattedEntries = data.map(entry => ({
-          id: entry.id,
-          date: entry.date,
-          minutes: entry.hours * 60, // Convert hours to minutes
-          user_id: entry.user_id,
-          screenshotUrl: undefined
-        }));
-        setScreenTimeEntries(formattedEntries);
+    if (savedChallengeStarted) {
+      // If challenge is already started, update the progress
+      checkProgress();
+    }
+    
+    setPoints(getUserPoints());
+  }, []);
+
+  const checkProgress = async () => {
+    const previousProgress = Number(localStorage.getItem('challengeProgress') || '0');
+    const updatedProgress = await updateChallengeProgress(user?.id);
+    setChallengeProgress(updatedProgress);
+    
+    // Check if the challenge was just completed
+    if (isJustCompleted(previousProgress, updatedProgress)) {
+      setShowConfetti(true);
+    }
+    
+    // Check for completion even if it happened earlier
+    const entriesCount = await getEntriesCount(user?.id);
+    if (entriesCount >= 30 && updatedProgress === 100) {
+      // For users who may have refreshed after completing
+      const hasSeenCompletionCelebration = localStorage.getItem('hasSeenCompletionCelebration');
+      if (hasSeenCompletionCelebration !== 'true') {
+        setShowConfetti(true);
+        localStorage.setItem('hasSeenCompletionCelebration', 'true');
       }
-    } catch (error) {
-      console.error("Unexpected error fetching entries:", error);
     }
   };
+
+  useEffect(() => {
+    saveUserPoints(points);
+  }, [points]);
 
   const handlePointsEarned = (earnedPoints: number) => {
     setPoints(prev => ({
@@ -77,28 +73,52 @@ const Index = () => {
     }));
     
     // Re-check progress when points are updated
-    if (user) {
-      checkProgress();
-      fetchScreenTimeEntries(); // Refresh screen time data when points are earned
-    }
+    checkProgress();
   };
 
-  const onStartChallenge = () => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
+  const handleStartChallenge = () => {
     setShowTerms(true);
   };
 
   const handleAcceptTerms = () => {
+    setChallengeStarted(true);
     setShowTerms(false);
-    confirmStartChallenge();
+    
+    startChallenge();
+    
+    toast({
+      title: "Challenge started!",
+      description: "You've successfully started the 30-day social media reduction challenge",
+    });
   };
 
-  useEffect(() => {
-    saveUserPoints(points);
-  }, [points]);
+  const handleCloseConfetti = () => {
+    setShowConfetti(false);
+    localStorage.setItem('hasSeenCompletionCelebration', 'true');
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      } 
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.5,
+        ease: [0.22, 1, 0.36, 1]
+      } 
+    }
+  };
 
   return (
     <motion.div
@@ -109,14 +129,33 @@ const Index = () => {
     >
       <Header activeTab="Dashboard" />
       <main className="container max-w-6xl mx-auto py-8 pb-20">
-        <DashboardContent 
-          user={user}
-          points={points}
-          challengeStarted={challengeStarted}
-          onPointsEarned={handlePointsEarned}
-          onStartChallenge={onStartChallenge}
-          onLoginClick={() => setShowAuthModal(true)}
-        />
+        <div className="px-4 mb-6 flex justify-end">
+          <PointsDisplay points={points} />
+        </div>
+
+        {!challengeStarted && (
+          <motion.div 
+            variants={itemVariants}
+            className="mb-8 mx-4 glassmorphism rounded-xl p-6 border border-primary/30 shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)]"
+          >
+            <div className="flex gap-6 items-start">
+              <div className="w-14 h-14 flex-shrink-0 bg-primary/10 rounded-full flex items-center justify-center">
+                <Trophy className="w-7 h-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold mb-2">Digital Detox Month</h2>
+                <Button 
+                  className="mt-4 w-full sm:w-auto bg-primary"
+                  onClick={handleStartChallenge}
+                >
+                  Start Challenge
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        <ScreenTimeTracker onPointsEarned={handlePointsEarned} />
         
         <TermsModal 
           isOpen={showTerms} 
@@ -128,11 +167,6 @@ const Index = () => {
         <ConfettiOverlay 
           isVisible={showConfetti} 
           onClose={handleCloseConfetti}
-        />
-        
-        <AuthModal 
-          isOpen={showAuthModal} 
-          onOpenChange={setShowAuthModal} 
         />
       </main>
     </motion.div>
