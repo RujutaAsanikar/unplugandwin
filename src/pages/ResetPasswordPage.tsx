@@ -32,8 +32,23 @@ const ResetPasswordPage = () => {
     }
   }, [user, navigate]);
 
-  // Check if there's a token in the URL
+  // Check if there's a token in the URL and/or error parameters
   useEffect(() => {
+    const errorParam = searchParams.get('error');
+    const errorCode = searchParams.get('error_code');
+    const errorDescription = searchParams.get('error_description');
+    
+    // Handle error from URL parameters (expired or invalid token)
+    if (errorParam || errorCode) {
+      setMode('request');
+      let errorMessage = "Your password reset link is invalid or has expired. Please request a new one.";
+      if (errorDescription) {
+        errorMessage = decodeURIComponent(errorDescription).replace(/\+/g, ' ');
+      }
+      setError(errorMessage);
+      return;
+    }
+    
     // If no token is present in the URL, show the request password reset form
     if (!searchParams.get('token')) {
       setMode('request');
@@ -73,6 +88,12 @@ const ResetPasswordPage = () => {
     } catch (err: any) {
       console.error('Reset password error:', err);
       setError(err.message || 'An error occurred while resetting your password');
+      
+      // If the error indicates an invalid or expired link, switch to request mode
+      if (err.message.includes('invalid') || err.message.includes('expire')) {
+        setMode('request');
+        setError('Your password reset link is invalid or has expired. Please request a new one.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -147,7 +168,7 @@ const ResetPasswordPage = () => {
         <Button
           type="button"
           variant="link"
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/')}
           className="text-sm"
         >
           Back to Login
