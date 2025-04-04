@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -25,20 +24,17 @@ const ResetPasswordPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // If user is already logged in, redirect to home
   useEffect(() => {
     if (user) {
       navigate('/', { replace: true });
     }
   }, [user, navigate]);
 
-  // Check if there's a token in the URL and/or error parameters
   useEffect(() => {
     const errorParam = searchParams.get('error');
     const errorCode = searchParams.get('error_code');
     const errorDescription = searchParams.get('error_description');
     
-    // Handle error from URL parameters (expired or invalid token)
     if (errorParam || errorCode) {
       setMode('request');
       let errorMessage = "Your password reset link is invalid or has expired. Please request a new one.";
@@ -49,7 +45,6 @@ const ResetPasswordPage = () => {
       return;
     }
     
-    // If no token is present in the URL, show the request password reset form
     if (!searchParams.get('token')) {
       setMode('request');
     }
@@ -60,7 +55,6 @@ const ResetPasswordPage = () => {
     
     setError(null);
     
-    // Validate passwords
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
@@ -80,7 +74,6 @@ const ResetPasswordPage = () => {
       
       setSuccess(true);
       
-      // Redirect after 3 seconds
       setTimeout(() => {
         navigate('/', { replace: true });
       }, 3000);
@@ -89,7 +82,6 @@ const ResetPasswordPage = () => {
       console.error('Reset password error:', err);
       setError(err.message || 'An error occurred while resetting your password');
       
-      // If the error indicates an invalid or expired link, switch to request mode
       if (err.message.includes('invalid') || err.message.includes('expire')) {
         setMode('request');
         setError('Your password reset link is invalid or has expired. Please request a new one.');
@@ -104,7 +96,6 @@ const ResetPasswordPage = () => {
     
     setError(null);
     
-    // Validate email
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Please enter a valid email address');
       return;
