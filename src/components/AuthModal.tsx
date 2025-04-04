@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -35,20 +34,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
   
   const { signIn, signUp, resetPassword, user } = useAuth();
 
-  // Close modal if user is logged in
   useEffect(() => {
     if (user) {
       onClose();
     }
   }, [user, onClose]);
 
-  // Update mode when defaultMode prop changes
   useEffect(() => {
     setMode(defaultMode);
     console.log("Mode updated to:", defaultMode);
   }, [defaultMode]);
 
-  // Reset form state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setEmail('');
@@ -111,13 +107,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Reset errors
     setEmailError('');
     setPasswordError('');
     setUsernameError('');
     setGeneralError('');
     
-    // Validate inputs
     const trimmedEmail = email.trim();
     const trimmedUsername = username.trim();
     const isEmailValid = validateEmail(trimmedEmail);
@@ -141,7 +135,6 @@ const AuthModal: React.FC<AuthModalProps> = ({
       } else if (mode === 'signup') {
         response = await signUp(trimmedEmail, password, trimmedUsername);
         
-        // Email already exists - switch to login mode
         if (response.error && (
             response.error.message.includes('already exists') || 
             response.error.message.includes('Email already exists')
@@ -156,13 +149,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
           return;
         }
         
-        // If signup was successful but no user yet (email verification needed)
         if (!response.error && !response.data.session) {
           toast({
             title: "Sign up successful",
             description: "Please check your email for a confirmation link!",
           });
-          // Automatically close the modal after successful signup
           onClose();
         } else if (response.error) {
           setGeneralError(response.error.message);
@@ -187,7 +178,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleForgotPassword = () => {
+    onClose();
+    window.location.href = '/forgot-password';
+  };
+
   const toggleMode = (newMode: 'login' | 'signup' | 'forgot-password') => {
+    if (newMode === 'forgot-password') {
+      handleForgotPassword();
+      return;
+    }
+    
     setMode(newMode);
     setEmailError('');
     setPasswordError('');

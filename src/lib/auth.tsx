@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -29,7 +28,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       console.log("Auth state changed:", _event, newSession?.user?.email);
       setSession(newSession);
@@ -37,7 +35,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     });
 
-    // THEN check for existing session
     const setData = async () => {
       try {
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
@@ -67,12 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Attempting to sign in with:", email);
       
-      // Add some basic client-side validation
       if (!email || !password) {
         throw new Error("Email and password are required");
       }
       
-      // Make sure we're using proper email formatting
       email = email.trim().toLowerCase();
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -95,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Sign in error:", error.message);
       
-      // Provide more user-friendly error messages
       let errorMessage = "An error occurred during sign in";
       
       if (error.message.includes("Invalid login credentials")) {
@@ -120,7 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Attempting to sign up with:", email);
       
-      // Add some basic client-side validation
       if (!email || !password) {
         throw new Error("Email and password are required");
       }
@@ -129,13 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Password should be at least 6 characters long");
       }
       
-      // Make sure we're using proper email formatting
       email = email.trim().toLowerCase();
       
-      // Instead of querying the profiles table directly, try to sign up
-      // and handle the error if the user already exists
-      
-      // Add username to user metadata if provided
       const options: {
         emailRedirectTo: string;
         data?: { username: string }
@@ -177,7 +165,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Sign up error:", error.message);
       
-      // Provide more user-friendly error messages
       let errorMessage = error.message;
       if (error.message.includes("duplicate key") || error.message.includes("already exists")) {
         errorMessage = "This email is already registered. Please sign in instead.";
