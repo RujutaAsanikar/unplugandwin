@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       console.log("Auth state changed:", _event, newSession?.user?.email);
       setSession(newSession);
@@ -35,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     });
 
+    // Then check for existing session
     const setData = async () => {
       try {
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
@@ -128,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailRedirectTo: string;
         data?: { username: string }
       } = {
-        emailRedirectTo: `${window.location.origin}`
+        emailRedirectTo: `${window.location.origin}/reset-password`
       };
 
       if (username) {

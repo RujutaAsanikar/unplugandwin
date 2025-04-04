@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle, User } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -31,6 +33,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [usernameError, setUsernameError] = useState('');
   const [generalError, setGeneralError] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const { signIn, signUp, resetPassword, user } = useAuth();
 
@@ -180,7 +183,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleForgotPassword = () => {
     onClose();
-    window.location.href = '/forgot-password';
+    navigate('/forgot-password');
   };
 
   const toggleMode = (newMode: 'login' | 'signup' | 'forgot-password') => {
