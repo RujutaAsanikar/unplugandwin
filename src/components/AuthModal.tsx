@@ -9,6 +9,7 @@ import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle, User, Shield
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthModalProps {
   isOpen: boolean;
