@@ -22,6 +22,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Utility function to clean up Supabase auth state
+const cleanupAuthState = () => {
+  // Remove standard auth tokens
+  localStorage.removeItem('supabase.auth.token');
+  
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -72,6 +92,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       email = email.trim().toLowerCase();
+      
+      // Clean up existing auth state before sign-in
+      cleanupAuthState();
+      
+      // Try global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log("Global sign-out before sign-in failed:", err);
+      }
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -211,11 +242,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // Clean up auth state
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      await supabase.auth.signOut({ scope: 'global' });
+      
       toast({
         title: "Signed out",
         description: "You have been successfully signed out",
       });
+      
+      // Force page reload for a clean state
+      window.location.href = '/';
     } catch (error) {
       console.error("Sign out error:", error.message);
       toast({

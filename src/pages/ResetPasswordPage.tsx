@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -6,29 +7,36 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Check, AlertCircle, Mail } from 'lucide-react';
+import { Loader2, Check, AlertCircle, Mail, UserCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
+import { updateAdminUsername } from '@/lib/adminUtils';
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [mode, setMode] = useState<'reset' | 'request'>('reset');
+  const [isAdminReset, setIsAdminReset] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    // Check if this is an admin reset
+    const adminParam = searchParams.get('admin');
+    setIsAdminReset(adminParam === 'true');
+    
+    if (user && !isAdminReset) {
       navigate('/', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, searchParams, isAdminReset]);
 
   useEffect(() => {
     const errorParam = searchParams.get('error');
@@ -72,7 +80,29 @@ const ResetPasswordPage = () => {
       
       if (error) throw error;
       
+      // If this is an admin reset and username is provided, update it
+      if (isAdminReset && username && user) {
+        const usernameResult = await updateAdminUsername(user.id, username);
+        if (!usernameResult.success) {
+          toast({
+            title: "Username update failed",
+            description: usernameResult.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Admin username updated",
+            description: "Your admin username has been updated successfully",
+          });
+        }
+      }
+      
       setSuccess(true);
+      
+      toast({
+        title: "Password updated successfully",
+        description: "You will be redirected to the login page shortly",
+      });
       
       setTimeout(() => {
         navigate('/', { replace: true });
@@ -104,8 +134,9 @@ const ResetPasswordPage = () => {
     setIsSubmitting(true);
     
     try {
+      // Send reset email with admin flag if it's an admin reset
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password${isAdminReset ? '?admin=true' : ''}`,
       });
       
       if (error) throw error;
@@ -170,6 +201,24 @@ const ResetPasswordPage = () => {
 
   const renderResetForm = () => (
     <form onSubmit={handleResetSubmit} className="space-y-4">
+      {isAdminReset && (
+        <div className="space-y-2">
+          <Label htmlFor="username">Admin Username</Label>
+          <div className="relative">
+            <UserCircle className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="New admin username"
+              className="pl-10"
+              autoComplete="username"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Leave blank if you don't want to change your username</p>
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="password">New Password</Label>
         <Input
@@ -203,10 +252,10 @@ const ResetPasswordPage = () => {
         {isSubmitting ? (
           <span className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Updating Password...
+            Updating {isAdminReset ? 'Admin ' : ''}Password...
           </span>
         ) : (
-          'Reset Password'
+          `Reset ${isAdminReset ? 'Admin ' : ''}Password`
         )}
       </Button>
     </form>
@@ -223,7 +272,7 @@ const ResetPasswordPage = () => {
       </div>
       {mode === 'reset' ? (
         <>
-          <h3 className="text-lg font-medium text-gray-900">Password updated successfully</h3>
+          <h3 className="text-lg font-medium text-gray-900">{isAdminReset ? 'Admin password' : 'Password'} updated successfully</h3>
           <p className="text-sm text-gray-500 mt-1">
             You will be redirected to the login page in a few seconds.
           </p>
@@ -255,12 +304,16 @@ const ResetPasswordPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">
-            {mode === 'reset' ? 'Reset Password' : 'Forgot Password'}
+            {isAdminReset 
+              ? (mode === 'reset' ? 'Reset Admin Credentials' : 'Reset Admin Password')
+              : (mode === 'reset' ? 'Reset Password' : 'Forgot Password')
+            }
           </CardTitle>
           <CardDescription className="text-center">
             {mode === 'reset' 
-              ? 'Enter your new password below' 
-              : 'Enter your email to receive a password reset link'}
+              ? (isAdminReset ? 'Update your admin username and password' : 'Enter your new password below')
+              : 'Enter your email to receive a password reset link'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>

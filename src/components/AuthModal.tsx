@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle, User } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle, User, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultMode?: 'login' | 'signup' | 'forgot-password';
+  defaultMode?: 'login' | 'signup' | 'forgot-password' | 'admin-reset';
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ 
@@ -22,7 +21,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   defaultMode = 'login'
 }) => {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(defaultMode);
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password' | 'admin-reset'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -77,7 +76,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const validatePassword = (password: string): boolean => {
-    if (mode === 'forgot-password') {
+    if (mode === 'forgot-password' || mode === 'admin-reset') {
       return true;
     }
     
@@ -121,7 +120,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     const isPasswordValid = validatePassword(password);
     const isUsernameValid = validateUsername(trimmedUsername);
     
-    if (!isEmailValid || (mode !== 'forgot-password' && !isPasswordValid) || (mode === 'signup' && !isUsernameValid)) {
+    if (!isEmailValid || (mode !== 'forgot-password' && mode !== 'admin-reset' && !isPasswordValid) || (mode === 'signup' && !isUsernameValid)) {
       return;
     }
     
@@ -172,6 +171,20 @@ const AuthModal: React.FC<AuthModalProps> = ({
         } else {
           setGeneralError(response.error.message);
         }
+      } else if (mode === 'admin-reset') {
+        const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+          redirectTo: `${window.location.origin}/reset-password?admin=true`,
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Admin reset email sent",
+          description: "Please check your email for the admin reset link",
+        });
+        onClose();
       }
     } catch (error) {
       console.error('Authentication error:', error);
@@ -186,7 +199,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
     navigate('/forgot-password');
   };
 
-  const toggleMode = (newMode: 'login' | 'signup' | 'forgot-password') => {
+  const handleAdminReset = () => {
+    setMode('admin-reset');
+  };
+
+  const toggleMode = (newMode: 'login' | 'signup' | 'forgot-password' | 'admin-reset') => {
     if (newMode === 'forgot-password') {
       handleForgotPassword();
       return;
@@ -211,6 +228,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
         return 'Welcome';
       case 'forgot-password':
         return 'Reset Password';
+      case 'admin-reset':
+        return 'Admin Reset';
     }
   };
 
@@ -222,6 +241,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
         return 'Sign up to track your digital detox progress';
       case 'forgot-password':
         return 'Enter your email to receive a password reset link';
+      case 'admin-reset':
+        return 'Reset admin username and password';
     }
   };
 
@@ -289,7 +310,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
           
-          {mode !== 'forgot-password' && (
+          {(mode !== 'forgot-password' && mode !== 'admin-reset') && (
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -321,7 +342,16 @@ const AuthModal: React.FC<AuthModalProps> = ({
               {passwordError && <p className="text-sm text-red-500 mt-1">{passwordError}</p>}
               
               {mode === 'login' && (
-                <div className="text-right">
+                <div className="text-right flex justify-between">
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="p-0 h-auto text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+                    onClick={handleAdminReset}
+                  >
+                    <ShieldAlert className="h-3 w-3" />
+                    Admin Reset
+                  </Button>
                   <Button 
                     type="button" 
                     variant="link" 
@@ -356,16 +386,20 @@ const AuthModal: React.FC<AuthModalProps> = ({
                     {mode === 'login' 
                       ? 'Signing in...' 
                       : mode === 'signup' 
-                        ? 'Creating account...' 
-                        : 'Sending reset link...'}
+                        ? 'Creating account...'
+                        : mode === 'admin-reset'
+                          ? 'Sending admin reset link...'
+                          : 'Sending reset link...'}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     {mode === 'login' 
                       ? 'Sign In' 
                       : mode === 'signup' 
-                        ? 'Sign Up' 
-                        : 'Send Reset Link'}
+                        ? 'Sign Up'
+                        : mode === 'admin-reset'
+                          ? 'Send Admin Reset Link'
+                          : 'Send Reset Link'}
                     <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
@@ -395,7 +429,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
               Already have an account? Sign In
             </Button>
           )}
-          {mode === 'forgot-password' && (
+          {(mode === 'forgot-password' || mode === 'admin-reset') && (
             <Button
               type="button"
               variant="link"
