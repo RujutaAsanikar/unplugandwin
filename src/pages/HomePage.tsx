@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,10 @@ const HomePage = () => {
         staggerChildren: 0.2
       }
     }
+  };
+
+  const handleParentClick = () => {
+    window.open('https://forms.gle/hsgiKmkmsbwKg22V7', '_blank');
   };
 
   return (
@@ -101,10 +106,18 @@ const HomePage = () => {
               </p>
             </div>
             <div className="flex justify-center gap-6 flex-wrap">
-              <Button variant="outline" className="rounded-full border-primary text-primary hover:bg-primary/10">
-                For Children
+              <Button 
+                variant="outline" 
+                className="rounded-full border-primary text-primary hover:bg-primary/10"
+                asChild
+              >
+                <Link to="/survey">For Children</Link>
               </Button>
-              <Button variant="outline" className="rounded-full border-primary text-primary hover:bg-primary/10">
+              <Button 
+                variant="outline" 
+                className="rounded-full border-primary text-primary hover:bg-primary/10"
+                onClick={handleParentClick}
+              >
                 For Parents
               </Button>
             </div>
@@ -306,8 +319,12 @@ const HomePage = () => {
                     Complete one of the forms to get started on your digital wellness journey.
                   </p>
                   <div className="flex gap-4">
-                    <Button size="sm" className="rounded-full">Kids</Button>
-                    <Button size="sm" variant="outline" className="rounded-full">Parents</Button>
+                    <Button size="sm" className="rounded-full" asChild>
+                      <Link to="/survey">Kids</Link>
+                    </Button>
+                    <Button size="sm" variant="outline" className="rounded-full" onClick={handleParentClick}>
+                      Parents
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -468,4 +485,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
