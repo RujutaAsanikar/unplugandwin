@@ -12,6 +12,7 @@ import AdminPage from "./pages/AdminPage";
 import RewardsPage from "./pages/RewardsPage";
 import HomePage from "./pages/HomePage";
 import SurveyPage from "./pages/SurveyPage";
+import ParentSurveyPage from "./pages/ParentSurveyPage";
 import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/rewards" element={<RewardsPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/survey" element={<SurveyPage />} />
+              <Route path="/parent-survey" element={<ParentSurveyPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/forgot-password" element={<ResetPasswordPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

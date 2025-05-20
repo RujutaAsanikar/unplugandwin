@@ -22,10 +22,6 @@ const HomePage = () => {
     }
   };
 
-  const handleParentClick = () => {
-    window.open('https://forms.gle/hsgiKmkmsbwKg22V7', '_blank');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-secondary/10">
       <Header activeTab="Home" />
@@ -116,9 +112,9 @@ const HomePage = () => {
               <Button 
                 variant="outline" 
                 className="rounded-full border-primary text-primary hover:bg-primary/10"
-                onClick={handleParentClick}
+                asChild
               >
-                For Parents
+                <Link to="/parent-survey">For Parents</Link>
               </Button>
             </div>
           </motion.div>
@@ -322,8 +318,8 @@ const HomePage = () => {
                     <Button size="sm" className="rounded-full" asChild>
                       <Link to="/survey">Kids</Link>
                     </Button>
-                    <Button size="sm" variant="outline" className="rounded-full" onClick={handleParentClick}>
-                      Parents
+                    <Button size="sm" variant="outline" className="rounded-full" asChild>
+                      <Link to="/parent-survey">Parents</Link>
                     </Button>
                   </div>
                 </div>
