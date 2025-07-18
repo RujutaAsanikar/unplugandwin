@@ -136,7 +136,7 @@ const ResetPasswordPage = () => {
     try {
       // Send reset email with admin flag if it's an admin reset
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password${isAdminReset ? '?admin=true' : ''}`,
+        redirectTo: `https://f428d67c-6a80-41d5-9c6d-63e0509c9b88.lovableproject.com/reset-password${isAdminReset ? '?admin=true' : ''}`,
       });
       
       if (error) throw error;
