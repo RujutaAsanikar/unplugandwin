@@ -90,7 +90,7 @@ const ParentSurveyPage = () => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const { error } = await supabase.from('parent_surveys').insert({
+      const { error } = await supabase.from('parent_surveys' as any).insert({
         name: data.name,
         child_name: data.childName,
         concern_level: data.concernLevel,
